@@ -1,6 +1,6 @@
 module Vector where
 
-import Prelude hiding(length)
+import Prelude hiding(length, subtract)
 
 type Vector = (Float, Float, Float)
 
