@@ -4,6 +4,15 @@ import Prelude hiding(length, subtract)
 
 type Vector = (Float, Float, Float)
 
+xx :: Vector -> Float
+xx (x, _, _) = x
+
+yy :: Vector -> Float
+yy (_, y, _) = y
+
+zz :: Vector -> Float
+zz (_, _, z) = z
+
 zeroVector :: Vector
 zeroVector = (0, 0, 0)
 
