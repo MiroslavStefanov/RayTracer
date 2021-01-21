@@ -1,4 +1,4 @@
-module Color where
+module Shading.Color where
 
 data Rgb = Rgb {
     red :: Float,

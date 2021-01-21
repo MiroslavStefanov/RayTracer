@@ -1,13 +1,13 @@
 module Intersection where
 
 import Vector
-
-type MeshId = Integer
+import Base
+import Shading.Texture
 
 data Intersection = Intersection {
     position :: Vector,
     normal :: Vector,
-    meshId :: MeshId,
+    texture :: Texture,
     distance :: Float,
-    coordinates :: (Float, Float)
+    coordinates :: Texel
 }
