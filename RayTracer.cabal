@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c1b0c0fd4d867fa69dc81a62fda0f1fdad1a2e0d2158430481a396d602dc7bcb
+-- hash: fafc7fdc44fd82a57bdd95a98baa54f845383b6a6a9d358e0ef5fe5360d1c042
 
 name:           RayTracer
 version:        0.1.0.0
@@ -27,12 +27,15 @@ source-repository head
 
 library
   exposed-modules:
-      Color
+      Base
       Geometry
       Intersection
       Lib
       LightSource
+      PinholeCamera
       Ray
+      Shading.Color
+      Shading.Texture
       Vector
   other-modules:
       Paths_RayTracer
