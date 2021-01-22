@@ -2,6 +2,7 @@ module Geometry where
 
 import Ray
 import Intersection
+import Shading.Texture
 import qualified Vector as Vec
 import Numeric.Limits
 
@@ -19,41 +20,50 @@ makePlane :: Vec.Vector -> Vec.Vector -> Geometry
 makePlane position normal = 
   Plane position $ Vec.normalize normal
 
-intersect :: Ray -> Intersection -> Geometry -> Maybe Intersection
-intersect ray@(start, direction, _)
-          (Intersection interPos _ mId _ _) 
-          (Plane geoPos geoNorm)
+computePrimaryTexDir :: Vec.Vector -> Vec.Vector
+computePrimaryTexDir normal = Vec.normalize maxDotVec
+  where a = Vec.cross normal (1, 0, 0)
+        b = Vec.cross normal (0, 1, 0)
+        c = Vec.cross normal (0, 0, 1)
+        maxDotVec = Vec.maxDot a b c
+
+intersect :: Ray -> Geometry -> Maybe Intersection
+intersect ray@(start, direction)
+          (Plane position normal)
   |abs denom <= epsilon = Nothing
   |scalar < 0 = Nothing
   |otherwise = Just (Intersection newPosition
-                                  geoNorm
-                                  mId
+                                  normal
+                                  (InvalidTexture "blank")
                                   scalar
                                   newCoords)
-    where denom = Vec.dot geoNorm direction
-          scalar = Vec.dot (Vec.subtract geoPos start) geoNorm / denom
+    where denom = Vec.dot normal direction
+          scalar = Vec.dot (Vec.subtract position start) normal / denom
           newPosition = scaleTo scalar ray
-          newCoords = (Vec.xx interPos, Vec.yy interPos)
+          uuVec = computePrimaryTexDir normal
+          vvVec = Vec.cross normal uuVec
+          uu = Vec.dot uuVec newPosition
+          vv = Vec.dot vvVec newPosition
+          newCoords = (uu, vv)
 
-intersect ray@(start, direction, _)
-          (Intersection interPos interNorm mId _ _) 
-          (Sphere geoPos radius)
+intersect ray@(start, direction)
+          (Sphere position radius)
   |d <= 0 = Nothing
   |xMin <= 0 = Nothing
   |otherwise = Just (Intersection newPosition
                                   newNormal
-                                  mId
+                                  (InvalidTexture "blank")
                                   xMin
                                   newCoords)
     where a = Vec.lengthSqr direction
-          b = Vec.dot direction (Vec.subtract start geoPos) * 2
-          c = Vec.lengthSqr (Vec.subtract start geoPos) - radius * radius
+          b = Vec.dot direction (Vec.subtract start position) * 2
+          c = Vec.lengthSqr (Vec.subtract start position) - radius * radius
           d = b * b - 4 * a * c
           x1 = (-b + sqrt d) / (2 * a)
           x2 = (-b - sqrt d) / (2 * a)
           xMin = min x1 x2
           newPosition = scaleTo xMin ray
-          newNormal = Vec.normalize (Vec.subtract interPos geoPos)
-          uu = (atan2 (Vec.yy interNorm) (Vec.xx interNorm) + pi) / (2 * pi)
-          vv = asin (Vec.zz interNorm / radius) * pi
+          newNormal = Vec.normalize (Vec.subtract newPosition position)
+          uu = (atan2 (Vec.yy newNormal) (Vec.xx newNormal) + pi) / (2 * pi)
+          vv = asin (Vec.zz newNormal / radius) * pi
           newCoords = (uu, vv)

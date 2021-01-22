@@ -58,3 +58,11 @@ dot (x, y, z) (xx, yy, zz) = x * xx + y * yy + z * zz
 reflect :: Vector -> Vector -> Vector
 reflect v normal =
   subtract v $ scale (2 * dot normal v) normal
+
+maxDot :: Vector -> Vector -> Vector -> Vector
+maxDot a b c
+  |maxDot == aDot = a
+  |maxDot == bDot = b
+  |maxDot == cDot = c
+    where dots@[aDot, bDot, cDot] = map (\x -> dot x x) [a, b, c]
+          maxDot = maximum dots  
