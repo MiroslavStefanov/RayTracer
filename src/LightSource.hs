@@ -1,6 +1,6 @@
 module LightSource where
 
-import Color
+import Shading.Color
 import Vector
 
 data LightSource = 
