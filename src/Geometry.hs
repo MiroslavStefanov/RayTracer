@@ -14,7 +14,31 @@ data Geometry =
   Sphere {
     position :: Vec.Vector,
     radius :: Float
+  } |
+  Triangle {
+    aa :: Vec.Vector,
+    bb :: Vec.Vector,
+    cc :: Vec.Vector
+  } |
+  Parallelepiped {
+    position :: Vec.Vector,
+    xAxis :: Vec.Vector,
+    yAxis :: Vec.Vector,
+    zAxis :: Vec.Vector,
+    halfLength :: Vec.Vector
+  } |
+  Torus {
+    position :: Vec.Vector,
+    sweptRadius :: Float,
+    tubeRadius :: Float
+  } |
+  Cone {
+    position :: Vec.Vector,
+    radius :: Float,
+    height :: Float,
+    phiMax :: Float
   }
+  
 
 makePlane :: Vec.Vector -> Vec.Vector -> Geometry
 makePlane position normal = 
@@ -67,3 +91,40 @@ intersect ray@(start, direction)
           uu = (atan2 (Vec.yy newNormal) (Vec.xx newNormal) + pi) / (2 * pi)
           vv = asin (Vec.zz newNormal / radius) * pi
           newCoords = (uu, vv)
+
+intersect ray@(start, direction) (Triangle aa bb cc)
+  |det < epsilon = Nothing
+  |u < 0 || u > det = Nothing
+  |v < 0 || u + v > det = Nothing
+  |uu < 0 || uu > 1 = Nothing
+  |vv < 0 || uu + vv > 1 = Nothing
+  |otherwise = Just (Intersection newPosition
+                                  normal
+                                  (InvalidTexture "blank")
+                                  distance
+                                  newCoords)
+    where e1 = Vec.subtract bb aa
+          e2 = Vec.subtract cc aa
+          pVec = Vec.cross direction e2
+          normDirection = Vec.normalize direction
+          det = Vec.dot pVec e1
+          tVec = Vec.subtract start aa
+          u = Vec.dot tVec pVec
+          qVec = Vec.cross tVec e1
+          v = Vec.dot normDirection qVec
+          invDet = 1 / det
+          uu = invDet * Vec.dot tVec pVec
+          vv = invDet * Vec.dot qVec normDirection
+          distance = invDet * Vec.dot e2 qVec
+          newPosition = scaleTo distance ray
+          normal = Vec.cross e1 e2
+          newCoords = (uu, vv)
+
+intersect ray@(start, direction)
+          (Parallelepiped position aa bb cc) = Nothing
+
+intersect ray@(start, direction)
+          (Torus position sRadius tRadius) = Nothing
+
+intersect ray@(start, direction)
+          (Cone position radius height phiMax) = Nothing                     
