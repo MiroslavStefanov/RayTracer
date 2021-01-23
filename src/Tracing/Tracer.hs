@@ -1,25 +1,27 @@
 {-# LANGUAGE TupleSections #-}
-module Shading.Shader where
+module Tracing.Tracer where
 
 import Base
+import ErrorHandling.ErrorMessages
 import Tracing.TracingPass
 import Tracing.Scene
 import Vector
 import Ray
 import Intersection
 import PinholeCamera hiding (position)
-import LightSource
+import qualified LightSource as LS
 import Shading.FrameBuffer
 import Shading.ShadingContext
 import Control.Applicative (Alternative (empty, many, (<|>)))
 import Data.Bifunctor (Bifunctor (second))
 import Numeric.Limits
+import Prelude hiding (subtract)
 
 import Shading.Texture
 
 newtype TraceError
   = GeneralError String
-  deriving (Show)
+  deriving (Show, Eq)
 
 abort :: String -> Either TraceError b
 abort = Left . GeneralError
@@ -54,7 +56,7 @@ instance Alternative Tracer where
       result -> result
 
 identityTracer :: a -> Tracer a
-identityTracer = Tracer . (pass,)
+identityTracer a = Tracer $ Right . (, a)
 
 abortTracer :: String -> Tracer a
 abortTracer error = Tracer $ \_ -> abort error
@@ -69,22 +71,10 @@ getIntersectionTracer :: Tracer (Maybe Intersection)
 getIntersectionTracer = Tracer $ \(TracingPass intersections r) ->
   case intersections of
     (h : t) -> Right (TracingPass t r, h)
-    _ -> Left $ GeneralError "No intersections left"
+    _ -> Left $ GeneralError noIntersectionsErrorMessage
 
 indexTexelsTracer :: Int -> Int -> Tracer (FrameBuffer Texel)
 indexTexelsTracer w h = Tracer $ \pass -> Right (pass, createBuffer w h)
-
-intersectionPositionTracer :: Texel -> Tracer Vector
-intersectionPositionTracer _ = do
-  maybeIntersection <- getIntersectionTracer
-  case maybeIntersection of
-    Just i -> return $ position i
-    Nothing -> abortTracer "Expected intersection"
-
-transformBufferTracer :: (a -> Tracer b) -> FrameBuffer a -> Tracer (FrameBuffer b)
-transformBufferTracer func (FrameBuffer w h buff) = let
-  newBuffer = mapM func buff in
-    FrameBuffer w h <$> newBuffer
 
 shootCameraRayTracer :: PinholeCamera -> Texel -> Tracer Ray
 shootCameraRayTracer camera texel = let
@@ -93,30 +83,30 @@ shootCameraRayTracer camera texel = let
     shootRayTracer cameraRay
     return cameraRay
 
-shootRayTowardsLightTracer :: LightSource -> Intersection -> Tracer ()
+shootRayTowardsLightTracer :: Intersection -> LS.LightSource -> Tracer ()
 shootRayTowardsLightTracer 
-  (PointLight _ _ lightPosition) 
-  (Intersection intPosition intNormal _ _ _) = 
+  (Intersection intPosition intNormal _ _ _)
+  (LS.PointLight _ _ lightPosition) = 
     shootRayTracer rayToLight where
       rayStart = add intPosition $ scale epsilon intNormal
-      rayDirection = normalize subtract lightPosition intPosition
+      rayDirection = normalize $ subtract lightPosition intPosition
       rayToLight = (rayStart, rayDirection)
 
 shootRayTowardsLightTracer _ _ = identityTracer ()
-
--- processIntersectionTracer :: Intersection -> Scene -> Tracer ShadingContext
--- processIntersectionTracer intesection scene = let
---   tex = texture intersection
---   in do
---     case tex of
---       PhongTexture specMult specExp -> 
 
 cameraRayIntersectionTracer :: Ray -> Scene -> Tracer ShadingContext
 cameraRayIntersectionTracer ray scene = do
   maybeIntersection <- getIntersectionTracer
   case maybeIntersection of
-    Just i -> return ShadingContext ray maybeIntersection
-    Nothing -> return ShadingContext ray maybeIntersection
+    Nothing -> return $ ShadingContext ray maybeIntersection
+    Just i -> do
+      mapM_ (shootRayTowardsLightTracer i) (lightSources scene)
+      return $ ShadingContext ray $ Just i
+
+transformBufferTracer :: (a -> Tracer b) -> FrameBuffer a -> Tracer (FrameBuffer b)
+transformBufferTracer func (FrameBuffer w h buff) = let
+  newBuffer = mapM func buff in
+    FrameBuffer w h <$> newBuffer
 
 -- testShootCameraRayTracer = let
 --   w = 2

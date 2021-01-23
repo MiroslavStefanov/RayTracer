@@ -13,4 +13,4 @@ data Texture =
     specularMultiplier :: Float,
     specularExponent :: Float
   } 
-  deriving (Show)
+  deriving (Show, Eq)

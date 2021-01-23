@@ -6,7 +6,7 @@ data FrameBuffer a = FrameBuffer{
   width :: Int,
   height :: Int,
   buffer :: [a]
-} deriving (Show)
+} deriving (Show, Eq)
 
 createBuffer :: Int -> Int -> FrameBuffer Texel
 createBuffer 0 _ = FrameBuffer 0 0 []

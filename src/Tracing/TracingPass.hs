@@ -7,7 +7,10 @@ import Data.Maybe
 data TracingPass = TracingPass {
   inputIntersections :: [Maybe Intersection],
   outputRays :: [Ray]
-} deriving (Show)
+} deriving (Show, Eq)
+
+emptyTracingPass :: TracingPass
+emptyTracingPass = TracingPass [] []
 
 addRay :: TracingPass -> Ray -> TracingPass
 addRay (TracingPass i rays) ray = TracingPass i (ray : rays)

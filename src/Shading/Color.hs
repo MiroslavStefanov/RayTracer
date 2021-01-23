@@ -4,7 +4,7 @@ data Rgb = Rgb {
     red :: Float,
     green :: Float,
     blue :: Float
-} deriving (Show)
+} deriving (Show, Eq)
 
 scale :: Float -> Rgb -> Rgb
 scale scalar = multiply (Rgb scalar scalar scalar)
