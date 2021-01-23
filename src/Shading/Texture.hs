@@ -8,5 +8,9 @@ data Texture =
   } |
   ColorTexture {
     color :: Rgb
-  }
+  } | 
+  PhongTexture {
+    specularMultiplier :: Float,
+    specularExponent :: Float
+  } 
   deriving (Show)

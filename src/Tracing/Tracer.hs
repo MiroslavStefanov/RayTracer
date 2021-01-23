@@ -3,11 +3,17 @@ module Shading.Shader where
 
 import Base
 import Tracing.TracingPass
+import Tracing.Scene
+import Vector
 import Ray
+import Intersection
 import PinholeCamera hiding (position)
+import LightSource
 import Shading.FrameBuffer
+import Shading.ShadingContext
 import Control.Applicative (Alternative (empty, many, (<|>)))
 import Data.Bifunctor (Bifunctor (second))
+import Numeric.Limits
 
 import Shading.Texture
 
@@ -47,6 +53,9 @@ instance Alternative Tracer where
       Left _ -> tb pass
       result -> result
 
+identityTracer :: a -> Tracer a
+identityTracer = Tracer . (pass,)
+
 abortTracer :: String -> Tracer a
 abortTracer error = Tracer $ \_ -> abort error
 
@@ -77,6 +86,49 @@ transformBufferTracer func (FrameBuffer w h buff) = let
   newBuffer = mapM func buff in
     FrameBuffer w h <$> newBuffer
 
+shootCameraRayTracer :: PinholeCamera -> Texel -> Tracer Ray
+shootCameraRayTracer camera texel = let
+  cameraRay = getRay texel camera
+  in do
+    shootRayTracer cameraRay
+    return cameraRay
+
+shootRayTowardsLightTracer :: LightSource -> Intersection -> Tracer ()
+shootRayTowardsLightTracer 
+  (PointLight _ _ lightPosition) 
+  (Intersection intPosition intNormal _ _ _) = 
+    shootRayTracer rayToLight where
+      rayStart = add intPosition $ scale epsilon intNormal
+      rayDirection = normalize subtract lightPosition intPosition
+      rayToLight = (rayStart, rayDirection)
+
+shootRayTowardsLightTracer _ _ = identityTracer ()
+
+-- processIntersectionTracer :: Intersection -> Scene -> Tracer ShadingContext
+-- processIntersectionTracer intesection scene = let
+--   tex = texture intersection
+--   in do
+--     case tex of
+--       PhongTexture specMult specExp -> 
+
+cameraRayIntersectionTracer :: Ray -> Scene -> Tracer ShadingContext
+cameraRayIntersectionTracer ray scene = do
+  maybeIntersection <- getIntersectionTracer
+  case maybeIntersection of
+    Just i -> return ShadingContext ray maybeIntersection
+    Nothing -> return ShadingContext ray maybeIntersection
+
+-- testShootCameraRayTracer = let
+--   w = 2
+--   h = 2
+--   camera = prepareCamera (0,0,10) (0,1,10) (0,0,1) (pi / 2.5) (fromIntegral w / fromIntegral h)
+--   initialPass = TracingPass [] []
+--   testTracer = do
+--     texelsBuffer <- indexTexelsTracer w h
+--     transformBufferTracer (shootCameraRayTracer camera) texelsBuffer
+--   in
+--     print $ trace testTracer initialPass
+
 -- testFunc = trace testTracer $ TracingPass testIntersections [] where
 --   testTracer = do
 --     indexedBuffer <- indexTexelsTracer 2 2
@@ -97,31 +149,3 @@ transformBufferTracer func (FrameBuffer w h buff) = let
 --   initialPass = TracingPass [Just emptyIntersection] []
 --   in
 --     print $ trace testTracer initialPass
-
-
-
-
--- identityShader :: a -> Shader a
--- identityShader value pass = (pass, value)
-
-
--- indexTexelsShader :: Int -> Int -> Shader FrameBuffer Texel
--- indexTexelsShader width height pass = (pass, createBuffer width height)
-
-
--- shootCameraRayShader :: PinholeCamera -> FrameBuffer Texel -> Shader FrameBuffer Ray
--- shootCameraRayShader camera (FrameBuffer w h texels) = do
-
-
--- sampleTextureShader :: Ray -> Shader Texture
--- sampleTextureShader incommingRay pass = let
---   intersection = head inputIntersections pass
---   in do 
---     case texture intersection of
---       ColorTexture c -> return ColorTexture c
---       anyT -> return InvalidTexture "Usupported texture type: " ++ show anyT
-
-
--- newtype Shader a = Shader{
---   shade :: Texel -> ShadingPass -> (ShadingPass, a)
--- }
