@@ -24,6 +24,7 @@ dependencies:
 - numeric-limits
 - hspec
 - linear
+- JuicyPixels
 
 library:
   source-dirs: src
