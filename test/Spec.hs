@@ -10,7 +10,10 @@ main = hspec $ do
       it "" testAbortTracer
       it "" testShootRayTracer
       it "" testGetIntersectionTracer
+      it "" testAnyIntersectionsTracer
       it "" testIndexTexelsTracer
       it "" testShootCameraRayTracer
       it "" testCameraRayIntersectionTracer
       it "" testTransformBufferTracer
+      it "" testShadeTracer
+      it "" testGenerateIntersectionsTracer

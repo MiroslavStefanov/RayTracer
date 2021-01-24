@@ -121,7 +121,7 @@ intersect ray@(start, direction) (Triangle aa bb cc)
           newCoords = (uu, vv)
 
 intersect ray@(start, direction)
-          (Parallelepiped position aa bb cc) = Nothing
+          (Parallelepiped position aa bb cc _) = Nothing
 
 intersect ray@(start, direction)
           (Torus position sRadius tRadius) = Nothing

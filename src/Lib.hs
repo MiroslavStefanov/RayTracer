@@ -1,6 +1,12 @@
 module Lib
-    ( someFunc
+    ( traceScene
     ) where
 
-someFunc :: IO ()
-someFunc = putStrLn "someFunc"
+import Tracing.Scene
+import PinholeCamera
+import Shading.FrameBuffer
+import Shading.Color
+
+traceScene :: Int -> Int -> PinholeCamera -> Scene -> FrameBuffer Rgb
+traceScene bufferWidth bufferHeight camera scene = undefined 
+    

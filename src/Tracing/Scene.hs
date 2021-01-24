@@ -18,6 +18,9 @@ addMesh (Scene objects l) mesh = Scene (mesh : objects) l
 addLightSrc :: Scene -> LightSource -> Scene
 addLightSrc (Scene o lightSources) light = Scene o (light : lightSources)
 
+getLightSourcesCount :: Scene -> Int
+getLightSourcesCount = length . lightSources
+
 traceRay :: Scene -> Ray -> Maybe Intersection
 traceRay (Scene objects _) ray =
   foldl closerIntersection Nothing intersectionsWithTexture

@@ -1,6 +1,7 @@
 module Shading.Texture where
 
 import Shading.Color
+import Shading.Sampler
 
 data Texture = 
   InvalidTexture {
@@ -10,6 +11,7 @@ data Texture =
     color :: Rgb
   } | 
   PhongTexture {
+    diffuseSampler :: Sampler,
     specularMultiplier :: Float,
     specularExponent :: Float
   } 
