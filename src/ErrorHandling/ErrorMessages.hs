@@ -4,4 +4,4 @@ noIntersectionsErrorMessage :: String
 noIntersectionsErrorMessage = "No intersections left"
 
 recursionDepthNotEnoughErrorMessage :: String
-recursionDepthNotEnoughErrorMessage = "Nz"
+recursionDepthNotEnoughErrorMessage = "The recursion depth is not enought"

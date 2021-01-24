@@ -107,36 +107,3 @@ transformBufferTracer func (FrameBuffer w h buff) = let
 
 generateIntersectionsTracer :: Scene -> Tracer (Int, Int)
 generateIntersectionsTracer scene = Tracer $ \(TracingPass i rays) -> Right (calculateNextTracingPass (TracingPass [] $ reverse rays) scene, (Prelude.length i, Prelude.length rays))
-
-
--- testShootCameraRayTracer = let
---   w = 2
---   h = 2
---   camera = prepareCamera (0,0,10) (0,1,10) (0,0,1) (pi / 2.5) (fromIntegral w / fromIntegral h)
---   initialPass = TracingPass [] []
---   testTracer = do
---     texelsBuffer <- indexTexelsTracer w h
---     transformBufferTracer (shootCameraRayTracer camera) texelsBuffer
---   in
---     print $ trace testTracer initialPass
-
--- testFunc = trace testTracer $ TracingPass testIntersections [] where
---   testTracer = do
---     indexedBuffer <- indexTexelsTracer 2 2
---     newBuffer <- transformBufferTracer intersectionPositionTracer indexedBuffer
---     return newBuffer
---   testIntersection = Just $ Intersection (0, 1, 0) (1, 0, 0) (InvalidTexture "") 0 (0, 0)
---   testIntersections = [testIntersection, testIntersection, testIntersection, testIntersection]
-
--- testTracer :: Tracer Ray
--- testTracer = do
---   i <- getIntersectionShader
---   shootRayShader r
---   return r
---   where r = ((0, 0, 0), (1, 0, 0))
-
--- testFunc = let
---   emptyIntersection = Intersection (0, 0, 0) (0, 0, 0) (InvalidTexture "") 0.0 (0.0, 0.0)
---   initialPass = TracingPass [Just emptyIntersection] []
---   in
---     print $ trace testTracer initialPass
