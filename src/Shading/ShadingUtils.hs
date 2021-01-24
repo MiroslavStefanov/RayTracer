@@ -5,19 +5,23 @@ import Shading.Color
 import Intersection
 import qualified LightSource as LS
 import qualified Vector as Vec
-import Numeric.Limits (epsilon)
 import Shading.Texture
 import Shading.Sampler
 
 getShadowRayStartPoint :: Intersection -> Vec.Vector
-getShadowRayStartPoint (Intersection start normal _ _ _) = 
-  Vec.add start $ Vec.scale epsilon normal
+getShadowRayStartPoint (Intersection start normal _ _ _) = start
 
 getShadowMultiplier :: Maybe Intersection -> LS.LightSource -> Float
 getShadowMultiplier Nothing _ = 1.0
 getShadowMultiplier _ LS.AmbientLight {} = undefined
 getShadowMultiplier (Just intersection) (LS.PointLight _ _ lightPosition) = 
-  if distance intersection ^ 2 < distanceToLightSquared then 0.1 else 1.0 where
+  -- case texture i of
+  --   PhongTexture s __ _ -> abs $ 1 - green (sample s (0, 0))
+  --   _ -> 0
+  -- 1 / (distance intersection / distanceToLightSquared) where
+  --   distanceToLightSquared = Vec.length $ Vec.subtract rayStart lightPosition
+  --   rayStart = getShadowRayStartPoint intersection
+  if distance intersection ^ 2 < distanceToLightSquared then 0 else 1.0 where
     distanceToLightSquared = Vec.lengthSqr $ Vec.subtract rayStart lightPosition
     rayStart = getShadowRayStartPoint intersection
 

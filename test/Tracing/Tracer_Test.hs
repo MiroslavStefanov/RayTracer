@@ -2,6 +2,7 @@
 {-# LANGUAGE LambdaCase #-}
 module Tracing.Tracer_Test where
 
+import Base
 import ErrorHandling.ErrorMessages
 import Tracing.Tracer
 import Tracing.TracingPass

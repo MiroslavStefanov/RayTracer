@@ -8,4 +8,4 @@ data Sampler = ConstantColorSampler {
 } deriving (Show, Eq)
 
 sample :: Sampler -> Texel -> Rgb
-sample (ConstantColorSampler color) texel = color
+sample (ConstantColorSampler color) _ = color

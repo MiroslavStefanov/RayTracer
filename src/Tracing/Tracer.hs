@@ -15,19 +15,10 @@ import Shading.ShadingContext
 import Shading.Color
 import Shading.ShadingUtils
 import Control.Applicative (Alternative (empty, many, (<|>)))
-
 import Data.Bifunctor (Bifunctor (second))
 import Prelude hiding (subtract)
-
+import Numeric.Limits
 import Shading.Texture
-import Control.Monad (replicateM)
-
-newtype TraceError
-  = GeneralError String
-  deriving (Show, Eq)
-
-abort :: String -> Either TraceError b
-abort = Left . GeneralError
 
 type TraceResult a = Either TraceError (TracingPass, a)
 
@@ -96,7 +87,7 @@ shootRayTowardsLightTracer
     shootRayTracer rayToLight where
       rayStart = getShadowRayStartPoint intresection
       rayDirection = normalize $ subtract lightPosition intPosition
-      rayToLight = (rayStart, rayDirection)
+      rayToLight = (Vector.add rayStart $ Vector.scale 0.001 rayDirection, rayDirection)
 
 shootRayTowardsLightTracer _ _ = identityTracer ()
 
@@ -109,52 +100,13 @@ cameraRayIntersectionTracer scene ray = do
       mapM_ (shootRayTowardsLightTracer i) (lightSources scene)
       return $ Right $ ShadingContext ray i
 
-shadeTracer :: Scene -> ShadingValue -> Tracer ShadingValue
-shadeTracer _ (Left rgb) = do
-  identityTracer $ Left rgb
-
-shadeTracer scene (Right context@(ShadingContext ray intersection)) = do
-  case texture intersection of
-    InvalidTexture msg -> abortTracer msg
-    ColorTexture rgb -> return $ Left rgb
-    PhongTexture _ specMult specExp -> do
-      shadowIntersections <- Control.Monad.replicateM (getLightSourcesCount scene) getIntersectionTracer
-      let 
-        shadowMultipliers = zipWith getShadowMultiplier shadowIntersections $ lightSources scene
-        colorSums = map (getLightContribution context) $ lightSources scene
-        shadedColors = zipWith Shading.Color.scale shadowMultipliers colorSums
-        accumulatedLightContributions = foldl Shading.Color.add (Rgb 0 0 0) shadedColors
-        in
-          return $ Left $ clamp accumulatedLightContributions
-
-
 transformBufferTracer :: (a -> Tracer b) -> FrameBuffer a -> Tracer (FrameBuffer b)
 transformBufferTracer func (FrameBuffer w h buff) = let
   newBuffer = mapM func buff in
     FrameBuffer w h <$> newBuffer
 
-generateIntersectionsTracer :: Scene -> Tracer ()
-generateIntersectionsTracer scene = Tracer $ \pass -> Right (calculateNextTracingPass pass scene, ())
-
-shadeFrameBufferTracer :: Scene ->  FrameBuffer ShadingValue -> Int -> Tracer (FrameBuffer ShadingValue)
-shadeFrameBufferTracer scene buffer remainingSteps
-  | remainingSteps <= 0 = identityTracer buffer
-  | otherwise = do
-    newBuffer <- transformBufferTracer (shadeTracer scene) buffer
-    generateIntersectionsTracer scene
-    hasAnyIntersections <- anyIntersectionsTracer
-    if hasAnyIntersections
-      then do
-        shadeFrameBufferTracer scene newBuffer $ remainingSteps - 1
-      else do
-        transformBufferTracer (shadeTracer scene) newBuffer -- one more step to process ShadingValues that need processing without intersections
-
-
--- testTracer :: Int -> Int -> PinholeCamera -> Scene -> Int -> Tracer (FrameBuffer Rgb)
--- testTracer bufferWidth bufferHeight camera scene maxRecursionDepth = do
---   indexedBuffer <- indexTexelsTracer bufferWidth bufferHeight
---   primaryRaysBuffer <- transformBufferTracer (shootCameraRayTracer camera) indexedBuffer
---   initialShadedBuffer <- transformBufferTracer (cameraRayIntersectionTracer scene) primaryRaysBuffer
+generateIntersectionsTracer :: Scene -> Tracer (Int, Int)
+generateIntersectionsTracer scene = Tracer $ \(TracingPass i rays) -> Right (calculateNextTracingPass (TracingPass [] $ reverse rays) scene, (Prelude.length i, Prelude.length rays))
 
 
 -- testShootCameraRayTracer = let

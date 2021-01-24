@@ -2,7 +2,7 @@ module Export where
 
 import Base
 import Shading.FrameBuffer
-import Shading.Color
+import Shading.Color ( Rgb(Rgb) )
 import Codec.Picture
 
 generatorFunc :: FrameBuffer Rgb -> Int -> Int -> PixelRGBF
