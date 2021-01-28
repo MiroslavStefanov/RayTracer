@@ -65,4 +65,30 @@ maxDot a b c
   |maxDot == bDot = b
   |maxDot == cDot = c
     where dots@[aDot, bDot, cDot] = map (\x -> dot x x) [a, b, c]
-          maxDot = maximum dots  
+          maxDot = maximum dots
+
+refract :: Vector -> Vector -> Float -> Float -> Maybe Vector
+refract normal incident n1 n2
+  |sinT2 > 1 = Nothing
+  |otherwise = Just transmittedVector
+    where n = n1 / n2
+          cosI = negate $ normal `dot` incident
+          sinT2 = n * n * (1 - cosI * cosI)
+          cosT = sqrt $ 1 - sinT2
+          transmittedVector = n `scale` incident `add` ((n * cosI - cosT) `scale` normal)
+
+rSchlick2 :: Vector -> Vector -> Float -> Float -> Float
+rSchlick2 normal incident n1 n2
+  |n1 <= n2 = ratio1
+  |sinT2 > 1 = 1
+  |otherwise = ratio2
+    where r0Root = (n1 - n2) / (n1 + n2)
+          r0 = r0Root ^ 2
+          cosI = negate $ normal `dot` incident
+          x1 = 1 - cosI
+          ratio1 = r0 + (1 - r0) * x1 ^ 5
+          n = n1 / n2
+          sinT2 = n * n * (1 - cosI * cosI)
+          cosX = sqrt $ 1 - sinT2
+          x2 = 1 - cosX
+          ratio2 = r0 + (1 - r0) * x2 ^ 5
