@@ -8,7 +8,7 @@ import Tracing.Scene
 import Vector
 import Ray
 import Intersection
-import PinholeCamera hiding (position)
+import qualified PinholeCamera as Camera
 import qualified LightSource as LS
 import Shading.FrameBuffer
 import Shading.ShadingContext
@@ -73,12 +73,13 @@ anyIntersectionsTracer = Tracer $ \pass@(TracingPass intersections rays) -> Righ
 indexTexelsTracer :: Int -> Int -> Tracer (FrameBuffer Texel)
 indexTexelsTracer w h = Tracer $ \pass -> Right (pass, createBuffer w h)
 
-shootCameraRayTracer :: PinholeCamera -> Texel -> Tracer Ray
-shootCameraRayTracer camera texel = let
-  cameraRay = getRay texel camera
+shootCameraRayTracer :: Camera.PinholeCamera -> Float -> Texel -> Tracer ShadingDensity
+shootCameraRayTracer camera cameraEta texel = let
+  cameraRay = Camera.getRay texel camera
+  cameraIntersection = Intersection (Camera.position camera) (Camera.target camera) (TransparentTexture cameraEta) 0 (0,0)
   in do
     shootRayTracer cameraRay
-    return cameraRay
+    return [(Right $ ShadingContext cameraRay cameraIntersection, 1)]
 
 shootRayTowardsLightTracer :: Intersection -> LS.LightSource -> Tracer ()
 shootRayTowardsLightTracer 
@@ -91,14 +92,19 @@ shootRayTowardsLightTracer
 
 shootRayTowardsLightTracer _ _ = identityTracer ()
 
-cameraRayIntersectionTracer :: Scene -> Ray -> Tracer ShadingValue
+shootReflectedRayTracer :: Intersection -> Ray -> Tracer Ray
+shootReflectedRayTracer (Intersection pos norm _ _ _) (rayStart, rayDirection) =
+  shootRayTracer reflectedRay >> identityTracer reflectedRay where
+    reflectDirection = Vector.normalize $ Vector.reflect rayDirection norm
+    reflectedRay = (pos, reflectDirection)
+
+-- TODO: remove -> not used anymore
+cameraRayIntersectionTracer :: Scene -> Ray -> Tracer ShadingDensity
 cameraRayIntersectionTracer scene ray = do
   maybeIntersection <- getIntersectionTracer
   case maybeIntersection of
-    Nothing -> return $ Left white
-    Just i -> do
-      mapM_ (shootRayTowardsLightTracer i) (lightSources scene)
-      return $ Right $ ShadingContext ray i
+    Nothing -> return [(Left white, 1)]
+    Just i -> return [(Right $ ShadingContext ray i, 1)]
 
 transformBufferTracer :: (a -> Tracer b) -> FrameBuffer a -> Tracer (FrameBuffer b)
 transformBufferTracer func (FrameBuffer w h buff) = let
@@ -107,36 +113,3 @@ transformBufferTracer func (FrameBuffer w h buff) = let
 
 generateIntersectionsTracer :: Scene -> Tracer (Int, Int)
 generateIntersectionsTracer scene = Tracer $ \(TracingPass i rays) -> Right (calculateNextTracingPass (TracingPass [] $ reverse rays) scene, (Prelude.length i, Prelude.length rays))
-
-
--- testShootCameraRayTracer = let
---   w = 2
---   h = 2
---   camera = prepareCamera (0,0,10) (0,1,10) (0,0,1) (pi / 2.5) (fromIntegral w / fromIntegral h)
---   initialPass = TracingPass [] []
---   testTracer = do
---     texelsBuffer <- indexTexelsTracer w h
---     transformBufferTracer (shootCameraRayTracer camera) texelsBuffer
---   in
---     print $ trace testTracer initialPass
-
--- testFunc = trace testTracer $ TracingPass testIntersections [] where
---   testTracer = do
---     indexedBuffer <- indexTexelsTracer 2 2
---     newBuffer <- transformBufferTracer intersectionPositionTracer indexedBuffer
---     return newBuffer
---   testIntersection = Just $ Intersection (0, 1, 0) (1, 0, 0) (InvalidTexture "") 0 (0, 0)
---   testIntersections = [testIntersection, testIntersection, testIntersection, testIntersection]
-
--- testTracer :: Tracer Ray
--- testTracer = do
---   i <- getIntersectionShader
---   shootRayShader r
---   return r
---   where r = ((0, 0, 0), (1, 0, 0))
-
--- testFunc = let
---   emptyIntersection = Intersection (0, 0, 0) (0, 0, 0) (InvalidTexture "") 0.0 (0.0, 0.0)
---   initialPass = TracingPass [Just emptyIntersection] []
---   in
---     print $ trace testTracer initialPass

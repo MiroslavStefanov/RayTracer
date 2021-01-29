@@ -23,37 +23,41 @@ import Export ( saveImageAsPng )
 import qualified Vector as Vec
 import Geometry
 
-shadeFrameBufferTracer :: Scene -> FrameBuffer ShadingValue -> Int -> Tracer (FrameBuffer ShadingValue)
+import Data.Foldable (foldlM)
+
+shadeFrameBufferTracer :: Scene -> FrameBuffer ShadingDensity -> Int -> Tracer (FrameBuffer ShadingDensity)
 shadeFrameBufferTracer scene buffer remainingSteps
   | remainingSteps <= 0 = identityTracer buffer
   | otherwise = do
-    newBuffer <- transformBufferTracer (shadeTracer scene) buffer
     generateIntersectionsTracer scene
     hasAnyIntersections <- anyIntersectionsTracer
     if hasAnyIntersections
       then do
-        shadeFrameBufferTracer scene newBuffer $ remainingSteps - 1
-      else do
-        transformBufferTracer (shadeTracer scene) newBuffer -- one more step to process ShadingValues that need processing without intersections
+        shadedBuffer <- transformBufferTracer (shadeTracer scene) buffer
+        requestedRaysBuffer <- transformBufferTracer (shootRaysFromIntersectionTracer scene) shadedBuffer
+        shadeFrameBufferTracer scene requestedRaysBuffer $ remainingSteps - 1
+      else
+        return buffer
 
-nzTracer :: ShadingValue -> Tracer Rgb
-nzTracer (Left color) = do return color
-nzTracer (Right _) = abortTracer recursionDepthNotEnoughErrorMessage
+getColorTracer :: ShadingDensity -> Tracer Rgb
+getColorTracer [] = abortTracer missingPixelValueErrorMessage
+getColorTracer density = foldlM addWeightedColorTracer (Rgb 0 0 0) density where
+  addWeightedColorTracer = \totalColor (value, weight) -> do
+    case value of
+      Left color -> return $ clamp (totalColor `add` scale weight color)
+      Right _ -> abortTracer recursionDepthNotEnoughErrorMessage
 
-testTracer :: Int -> Int -> PinholeCamera -> Scene -> Int -> Tracer (FrameBuffer Rgb)
-testTracer bufferWidth bufferHeight camera scene maxRecursionDepth = do
+renderSceneTracer :: Int -> Int -> PinholeCamera -> Scene -> Int -> Tracer (FrameBuffer Rgb)
+renderSceneTracer bufferWidth bufferHeight camera scene maxRecursionDepth = do
   indexedBuffer <- indexTexelsTracer bufferWidth bufferHeight
-  primaryRaysBuffer <- transformBufferTracer (shootCameraRayTracer camera) indexedBuffer
-  generateIntersectionsTracer scene
-  initialBuffer <- transformBufferTracer (cameraRayIntersectionTracer scene) primaryRaysBuffer
-  generateIntersectionsTracer scene
-  finalBuffer <- shadeFrameBufferTracer scene initialBuffer maxRecursionDepth
-  transformBufferTracer nzTracer finalBuffer
+  initialBuffer <- transformBufferTracer (shootCameraRayTracer camera 1) indexedBuffer
+  shadedBuffer <- shadeFrameBufferTracer scene initialBuffer maxRecursionDepth
+  transformBufferTracer getColorTracer shadedBuffer
 
 
 traceScene :: Int -> Int -> PinholeCamera -> Scene -> Int -> Either TraceError (FrameBuffer Rgb)
 traceScene bufferWidth bufferHeight camera scene recursionDepth =
-  let tracingResult = trace (testTracer bufferWidth bufferHeight camera scene recursionDepth) emptyTracingPass 
+  let tracingResult = trace (renderSceneTracer bufferWidth bufferHeight camera scene recursionDepth) emptyTracingPass 
   in case tracingResult of 
     Left error -> Left error
     Right (_, buffer) -> Right buffer

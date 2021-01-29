@@ -14,7 +14,7 @@ main = do
   putStrLn "Processing traceOutput.png ..."
   case image of
     Right img -> saveImage "traceOutput.png" img
-    Left (GeneralError msg) -> putStrLn msg
+    Left (GeneralError msg) -> putStrLn $ "Error: " ++ msg
     where
       camera = makePinholeCamera (3,3,10) (0,0,-1) (0,1,0) (pi/2.5) 1
       sphere = Sphere (4,4,-5) 2
@@ -28,5 +28,5 @@ main = do
       meshPlane = makeMesh plane planeTexture
       light = LS.PointLight 100 (Rgb 1 1 1) (10, 8, 0)
       scene = Scene [meshSpere, meshPlane, meshTriangle] [light]
-      image = traceScene 300 300 camera scene 1
+      image = traceScene 256 256 camera scene 3
 

@@ -14,5 +14,11 @@ data Texture =
     diffuseSampler :: Sampler,
     specularMultiplier :: Float,
     specularExponent :: Float
-  } 
+  } |
+  FrenselTexture {
+    eta :: Float
+  } |
+  TransparentTexture {
+    eta :: Float
+  }
   deriving (Show, Eq)

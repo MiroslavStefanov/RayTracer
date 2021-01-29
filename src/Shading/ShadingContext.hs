@@ -11,3 +11,4 @@ data ShadingContext = ShadingContext {
 } deriving (Show, Eq)
 
 type ShadingValue = Either Rgb ShadingContext
+type ShadingDensity = [(ShadingValue, Float)]
