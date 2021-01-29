@@ -7,4 +7,4 @@ missingPixelValueErrorMessage :: String
 missingPixelValueErrorMessage = "Pixel value is missing"
 
 recursionDepthNotEnoughErrorMessage :: String
-recursionDepthNotEnoughErrorMessage = "Specified recursion depth was not enough to compute image"
+recursionDepthNotEnoughErrorMessage = "The recursion depth is not enough"
