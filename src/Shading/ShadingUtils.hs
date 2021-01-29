@@ -15,12 +15,6 @@ getShadowMultiplier :: Maybe Intersection -> LS.LightSource -> Float
 getShadowMultiplier Nothing _ = 1.0
 getShadowMultiplier _ LS.AmbientLight {} = undefined
 getShadowMultiplier (Just intersection) (LS.PointLight _ _ lightPosition) = 
-  -- case texture i of
-  --   PhongTexture s __ _ -> abs $ 1 - green (sample s (0, 0))
-  --   _ -> 0
-  -- 1 / (distance intersection / distanceToLightSquared) where
-  --   distanceToLightSquared = Vec.length $ Vec.subtract rayStart lightPosition
-  --   rayStart = getShadowRayStartPoint intersection
   if distance intersection ^ 2 < distanceToLightSquared then 0 else 1.0 where
     distanceToLightSquared = Vec.lengthSqr $ Vec.subtract rayStart lightPosition
     rayStart = getShadowRayStartPoint intersection

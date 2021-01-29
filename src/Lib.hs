@@ -3,6 +3,7 @@ module Lib
     , saveImage
     , makePinholeCamera
     , makeMesh
+    , exportImage
     ) where
 
 import Base
@@ -70,3 +71,12 @@ makePinholeCamera = prepareCamera
 
 makeMesh :: Geometry -> Texture -> Mesh
 makeMesh = Mesh
+
+exportImage :: Scene -> Perspective -> Int -> String -> IO ()
+exportImage scene (Perspective camera width height) recDepth outputName = do
+  putStrLn $ "Processing " ++ outputName ++ "..."
+  case image of
+    Right img -> saveImage outputName img
+    Left (GeneralError msg) -> putStrLn $ "Error: " ++ msg
+    where      
+      image = traceScene width height camera scene recDepth

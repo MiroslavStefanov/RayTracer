@@ -98,14 +98,6 @@ shootReflectedRayTracer (Intersection pos norm _ _ _) (rayStart, rayDirection) =
     reflectDirection = Vector.normalize $ Vector.reflect rayDirection norm
     reflectedRay = (pos, reflectDirection)
 
--- TODO: remove -> not used anymore
-cameraRayIntersectionTracer :: Scene -> Ray -> Tracer ShadingDensity
-cameraRayIntersectionTracer scene ray = do
-  maybeIntersection <- getIntersectionTracer
-  case maybeIntersection of
-    Nothing -> return [(Left white, 1)]
-    Just i -> return [(Right $ ShadingContext ray i, 1)]
-
 transformBufferTracer :: (a -> Tracer b) -> FrameBuffer a -> Tracer (FrameBuffer b)
 transformBufferTracer func (FrameBuffer w h buff) = let
   newBuffer = mapM func buff in

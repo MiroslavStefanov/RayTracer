@@ -8,26 +8,32 @@ import Shading.Color
 import Shading.Texture
 import Shading.Sampler
 import Base
+import PinholeCamera
+
+scene1 :: Scene
+scene1 = scene
+  where 
+    bottomPlane = Plane (0, 0, 0) (0, 0, 1)
+    topPlane = Plane (0, 0, 45) (0, 0, -1)
+    leftPlane = Plane (-20, 0, 0) (1, 0, 0)
+    rightPlane = Plane (20, 0, 0) (-1, 0, 0)
+    sphere = Sphere (5, 30, 6) 6
+    bottomPlaneTexture = PhongTexture (CheckerSampler white (Rgb 0 0 0) 3.0) 1 1
+    topPlaneTexture = PhongTexture (ConstantColorSampler (Rgb 0 1 0)) 0 8
+    leftPlaneTexture = PhongTexture (ConstantColorSampler (Rgb 1 0 0)) 0 8
+    rightPlaneTexture = PhongTexture (ConstantColorSampler (Rgb 0 0 1)) 0 8
+    sphereTexture = PhongTexture (CheckerSampler (Rgb 1 0 0) (Rgb 0 0 1) 0.03) 6 10
+    meshBottomPlane = makeMesh bottomPlane bottomPlaneTexture
+    meshTopPlane = makeMesh topPlane topPlaneTexture
+    meshLeftPlane = makeMesh leftPlane leftPlaneTexture
+    meshRightPlane = makeMesh rightPlane rightPlaneTexture
+    meshSphere = makeMesh sphere sphereTexture
+    light = LS.PointLight 650 (Rgb 1 1 1) (10, 20, 30)
+    scene = Scene [meshBottomPlane, meshTopPlane, meshLeftPlane, meshRightPlane, meshSphere] [light]
+
+perspective1 :: Perspective
+perspective1 = createPerspective (0, 0, 10) (0, 1, 10) (0, 0, 1) (pi/2.5) 400 400
 
 main :: IO ()
 main = do
-  putStrLn "Processing traceOutput.png ..."
-  case image of
-    Right img -> saveImage "traceOutput.png" img
-    Left (GeneralError msg) -> putStrLn $ "Error: " ++ msg
-    where
-      camera = makePinholeCamera (3,3,10) (0,0,-1) (0,1,0) (pi/2.5) 1
-      sphere = Sphere (4,4,-5) 1
-      triangle = Triangle (2, 2, -3) (8, 2, -6) (4, 7, -6)
-      plane = Plane (0, 0, -6) (0,0,1)
-      --sphereTexture = PhongTexture (ConstantColorSampler (Rgb 1 0 0)) 1 50
-      sphereTexture = FrenselTexture 1.33
-      triangleTexture = PhongTexture (ConstantColorSampler (Rgb 0 0 1)) 1 1
-      planeTexture = PhongTexture (CheckerSampler 3.0) 1 1
-      meshSpere = makeMesh sphere sphereTexture
-      meshTriangle = makeMesh triangle triangleTexture
-      meshPlane = makeMesh plane planeTexture
-      light = LS.PointLight 100 (Rgb 1 1 1) (10, 8, 0)
-      scene = Scene [meshSpere, meshPlane, meshTriangle] [light]
-      image = traceScene 256 256 camera scene 3
-
+  exportImage scene1 perspective1 3 "traceOutput.png"

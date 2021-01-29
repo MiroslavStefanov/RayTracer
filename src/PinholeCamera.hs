@@ -5,15 +5,25 @@ import Base
 import qualified Vector as Vec
 
 data PinholeCamera = PinholeCamera {
-                      topLeft :: Vec.Vector,
-                      bottomLeft :: Vec.Vector,
-                      topRight :: Vec.Vector,
-                      position :: Vec.Vector,
-                      target :: Vec.Vector,
-                      up :: Vec.Vector,
-                      fov :: Float,
-                      aspectRatio :: Float
-                    }               
+  topLeft :: Vec.Vector,
+  bottomLeft :: Vec.Vector,
+  topRight :: Vec.Vector,
+  position :: Vec.Vector,
+  target :: Vec.Vector,
+  up :: Vec.Vector,
+  fov :: Float,
+  aspectRatio :: Float
+}
+
+data Perspective = Perspective {
+  camera :: PinholeCamera,
+  width :: Int,
+  height :: Int
+}
+
+createPerspective :: Vec.Vector -> Vec.Vector -> Vec.Vector -> Float -> Int -> Int -> Perspective
+createPerspective pos target up fov width height =
+  Perspective (prepareCamera pos target up fov (fromIntegral width / fromIntegral height)) width height
 
 prepareCamera :: Vec.Vector -> Vec.Vector -> Vec.Vector -> Float -> Float -> PinholeCamera
 prepareCamera pos target up fov aspRatio =
