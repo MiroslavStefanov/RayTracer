@@ -27,8 +27,8 @@ shootRaysFromIntersectionTracer scene = foldlM tracer [] where
               FrenselTexture eta -> let
                 reflectedDirection = Vector.reflect rayDirection $ normal intersection
                 reflectedRay = (position intersection, reflectedDirection)
-                maybeTransmittedDirection = Vector.refract rayDirection (normal intersection) 1 eta
-                reflectionRatio = Vector.rSchlick2 rayDirection (normal intersection) 1 eta
+                maybeTransmittedDirection = Vector.refract (normal intersection) rayDirection 1 eta
+                reflectionRatio = Vector.rSchlick2 (normal intersection) rayDirection 1 eta
                 newIntersection = addTexture intersection (TransparentTexture eta)
                 resultDensity = (Right$ SContext.ShadingContext reflectedRay newIntersection, reflectionRatio * weight) :  totalDensity
                 in do
