@@ -12,10 +12,9 @@ data Intersection = Intersection {
   coordinates :: Texel
 } deriving (Show, Eq)
 
-addTexture :: Maybe Intersection -> Texture -> Maybe Intersection
-addTexture Nothing _ = Nothing
-addTexture (Just (Intersection pos normal _ distance coords)) texture =
-  Just (Intersection pos normal texture distance coords)
+addTexture :: Intersection -> Texture -> Intersection
+addTexture (Intersection pos normal _ distance coords) texture =
+  Intersection pos normal texture distance coords
 
 closerIntersection :: Maybe Intersection -> Maybe Intersection -> Maybe Intersection
 closerIntersection Nothing Nothing = Nothing

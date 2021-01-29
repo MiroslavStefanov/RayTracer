@@ -25,9 +25,10 @@ traceRay :: Scene -> Ray -> Maybe Intersection
 traceRay (Scene objects _) ray =
   foldl closerIntersection Nothing intersectionsWithTexture
   where geometries = map geometry objects
-        textures = map Tracing.Mesh.texture objects
+        textures = map (Just . Tracing.Mesh.texture) objects
         intersections = map (intersect ray) geometries
-        intersectionsWithTexture = zipWith addTexture intersections textures
+        setTextures = map (fmap addTexture) intersections
+        intersectionsWithTexture = zipWith (<*>) setTextures textures
 
 calculateNextTracingPass :: TracingPass -> Scene -> TracingPass
 calculateNextTracingPass (TracingPass _ rays) scene =

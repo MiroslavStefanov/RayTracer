@@ -17,10 +17,11 @@ main = do
     Left (GeneralError msg) -> putStrLn $ "Error: " ++ msg
     where
       camera = makePinholeCamera (3,3,10) (0,0,-1) (0,1,0) (pi/2.5) 1
-      sphere = Sphere (4,4,-5) 2
+      sphere = Sphere (4,4,-5) 1
       triangle = Triangle (2, 2, -3) (8, 2, -6) (4, 7, -6)
       plane = Plane (0, 0, -6) (0,0,1)
-      sphereTexture = PhongTexture (ConstantColorSampler (Rgb 1 0 0)) 1 50
+      --sphereTexture = PhongTexture (ConstantColorSampler (Rgb 1 0 0)) 1 50
+      sphereTexture = FrenselTexture 1.33
       triangleTexture = PhongTexture (ConstantColorSampler (Rgb 0 0 1)) 1 1
       planeTexture = PhongTexture (ConstantColorSampler (Rgb 0 1 0)) 1 1
       meshSpere = makeMesh sphere sphereTexture
