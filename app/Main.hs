@@ -61,5 +61,6 @@ perspective = createPerspective (0, 0, 10) (0, 1, 10) (0, 0, 1) (pi/2.5) 400 400
 
 main :: IO ()
 main = do
-  exportImage scene1 perspective 3 "traceOutput.png"
-  exportImage scene2 perspective 5 "traceOutput2.png"
+  renderScene scene1 perspective 3
+  -- exportImage scene1 perspective 3 "traceOutput.png"
+  -- exportImage scene2 perspective 5 "traceOutput2.png"

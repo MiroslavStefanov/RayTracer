@@ -4,6 +4,7 @@ module Lib
     , makePinholeCamera
     , makeMesh
     , exportImage
+    , renderScene
     ) where
 
 import Base
@@ -16,6 +17,7 @@ import Shading.ShadingContext
 import Shading.ShadingTracers
 import Shading.Texture
 import Tracing.Mesh
+import Rendering
 
 import ErrorHandling.ErrorMessages
 import Tracing.TracingPass
@@ -25,6 +27,7 @@ import qualified Vector as Vec
 import Geometry
 
 import Data.Foldable (foldlM)
+import Data.Time.Clock
 
 shadeFrameBufferTracer :: Scene -> FrameBuffer ShadingDensity -> Int -> Tracer (FrameBuffer ShadingDensity)
 shadeFrameBufferTracer scene buffer remainingSteps
@@ -74,9 +77,27 @@ makeMesh = Mesh
 
 exportImage :: Scene -> Perspective -> Int -> String -> IO ()
 exportImage scene (Perspective camera width height) recDepth outputName = do
-  putStrLn $ "Processing " ++ outputName ++ "..."
+  startTime <- getCurrentTime
   case image of
-    Right img -> saveImage outputName img
+    Right img -> do
+      putStr "[Tracing]Seconds elapsed: "
+      endTime <- getCurrentTime
+      print $ nominalDiffTimeToSeconds (endTime `diffUTCTime` startTime)
+      saveImage outputName img
+    Left (GeneralError msg) -> putStrLn $ "Error: " ++ msg
+    where      
+      image = traceScene width height camera scene recDepth
+
+renderScene :: Scene -> Perspective -> Int -> IO()
+renderScene scene (Perspective camera width height) recDepth = do
+  startTime <- getCurrentTime
+  case image of
+    Right img -> do
+      putStr "[Tracing]Seconds elapsed: "
+      endTime <- getCurrentTime
+      print $ nominalDiffTimeToSeconds (endTime `diffUTCTime` startTime)
+      (window, renderer) <- openWindow width height
+      renderFrameBuffer renderer img
     Left (GeneralError msg) -> putStrLn $ "Error: " ++ msg
     where      
       image = traceScene width height camera scene recDepth

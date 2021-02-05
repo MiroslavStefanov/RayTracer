@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 61dc003bd10357864ce4716f16e04e3e362a84ebf482cfcee8a7fe097b6f5afe
+-- hash: 94fa73f3bcb5f29fa374b653bd9241960917bbe958b036e8886f70ddaabb7e70
 
 name:           RayTracer
 version:        0.1.0.0
@@ -36,6 +36,7 @@ library
       LightSource
       PinholeCamera
       Ray
+      Rendering
       Shading.Color
       Shading.FrameBuffer
       Shading.Sampler
@@ -58,6 +59,10 @@ library
     , hspec
     , linear
     , numeric-limits
+    , sdl2
+    , text
+    , time
+    , vector
   default-language: Haskell2010
 
 executable RayTracer-exe
@@ -74,6 +79,10 @@ executable RayTracer-exe
     , hspec
     , linear
     , numeric-limits
+    , sdl2
+    , text
+    , time
+    , vector
   default-language: Haskell2010
 
 test-suite RayTracer-test
@@ -92,4 +101,8 @@ test-suite RayTracer-test
     , hspec
     , linear
     , numeric-limits
+    , sdl2
+    , text
+    , time
+    , vector
   default-language: Haskell2010
