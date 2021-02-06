@@ -5,6 +5,7 @@ import Intersection
 import Shading.Texture
 import qualified Vector as Vec
 import Numeric.Limits
+import Solver
 
 data Geometry = 
   Plane {
@@ -124,7 +125,45 @@ intersect ray@(start, direction)
           (Parallelepiped position aa bb cc _) = Nothing
 
 intersect ray@(start, direction)
-          (Torus position sRadius tRadius) = Nothing
+          (Cone position radius height phiMax) = Nothing          
 
-intersect ray@(start, direction)
-          (Cone position radius height phiMax) = Nothing                     
+intersect ray@(origStart, origDirection)
+          torus@(Torus position sRadius tRadius)
+  |null solution = Nothing
+  |otherwise = Just (Intersection hitPoint
+                                  localNormal
+                                  (InvalidTexture "blank")
+                                  minT
+                                  newCoords)
+    where
+      localRay@(start, direction) = (Vec.subtract origStart position, origDirection)
+      ox = Vec.xx start
+      oy = Vec.yy start
+      oz = Vec.zz start
+      dx = Vec.xx direction
+      dy = Vec.yy direction
+      dz = Vec.zz direction
+      sumDSqrd = dx^2 + dy^2 + dz^2
+      e = ox^2 + oy^2 + oz^2 - sRadius^2 - tRadius^2
+      f = ox * dx + oy * dy + oz * dz
+      fourASqrd = 4 * sRadius^2
+      coeffs = (e^2 - fourASqrd * (tRadius^2 - oy^2),
+                4 * f * e + 2 * fourASqrd * oy * dy,
+                2 * sumDSqrd * e + 4 * f^2 + fourASqrd * dy^2,
+                4 * sumDSqrd * f,
+                sumDSqrd^2)
+      solution = filter (>kEps) (solve4 coeffs)
+      minT = minimum solution               
+      localHitPoint = scaleTo minT localRay
+      localNormal = computeNormalAtPoint torus localHitPoint
+      hitPoint = scaleTo minT ray
+      newCoords = (0, 0)
+
+computeNormalAtPoint :: Geometry -> Vec.Vector -> Vec.Vector
+computeNormalAtPoint (Torus position sRadius tRadius) (xx, yy, zz) = Vec.normalize result
+  where
+    paramSquared = sRadius^2 + tRadius^2
+    sumSquared = xx^2 + yy^2 + zz^2
+    result = (4 * xx * (sumSquared - paramSquared),
+              4 * yy * (sumSquared - paramSquared + 2 * sRadius^2),
+              4 * zz * (sumSquared - paramSquared))
