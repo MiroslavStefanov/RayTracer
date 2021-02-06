@@ -1,5 +1,7 @@
 module Shading.Color where
 
+import Data.Word
+
 data Rgb = Rgb {
     red :: Float,
     green :: Float,
@@ -26,3 +28,11 @@ clamp (Rgb r g b) = let
 
 white :: Rgb
 white = Rgb 1 1 1
+
+toRgb24 :: Rgb -> (Word8, Word8, Word8)
+toRgb24 (Rgb r g b) = (convert r, convert g, convert b) where
+    convert = floor . (*255.0)
+
+unpackRgb24 :: [Rgb] -> [Word8]
+unpackRgb24 = foldr (unpacker . toRgb24) [] where
+    unpacker = \(r, g, b) result -> r : (g : (b : result))

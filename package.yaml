@@ -25,6 +25,10 @@ dependencies:
 - hspec
 - linear
 - JuicyPixels
+- sdl2
+- time
+- text
+- vector
 
 library:
   source-dirs: src
