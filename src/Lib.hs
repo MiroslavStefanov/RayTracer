@@ -1,9 +1,5 @@
 module Lib
-    ( traceScene
-    , saveImage
-    , makePinholeCamera
-    , makeMesh
-    , exportImage
+    ( exportImage
     , renderScene
     ) where
 
@@ -18,6 +14,7 @@ import Shading.ShadingTracers
 import Shading.Texture
 import Tracing.Mesh
 import Rendering
+import qualified LightSource as LS
 
 import ErrorHandling.ErrorMessages
 import Tracing.TracingPass
@@ -67,15 +64,6 @@ traceScene bufferWidth bufferHeight camera scene recursionDepth =
     Left error -> Left error
     Right (_, buffer) -> Right buffer
 
-saveImage :: FilePath -> FrameBuffer Rgb -> IO ()
-saveImage = saveImageAsPng
-
-makePinholeCamera :: Vec.Vector -> Vec.Vector -> Vec.Vector -> Float -> Float -> PinholeCamera
-makePinholeCamera = prepareCamera
-
-makeMesh :: Geometry -> Texture -> Mesh
-makeMesh = Mesh
-
 exportImage :: Scene -> Perspective -> Int -> String -> IO ()
 exportImage scene (Perspective camera width height) recDepth outputName = do
   startTime <- getCurrentTime
@@ -84,7 +72,7 @@ exportImage scene (Perspective camera width height) recDepth outputName = do
       putStr "[Tracing]Seconds elapsed: "
       endTime <- getCurrentTime
       print $ nominalDiffTimeToSeconds (endTime `diffUTCTime` startTime)
-      saveImage outputName img
+      saveImageAsPng outputName img
     Left (GeneralError msg) -> putStrLn $ "Error: " ++ msg
     where      
       image = traceScene width height camera scene recDepth
