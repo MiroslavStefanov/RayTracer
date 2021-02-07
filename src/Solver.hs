@@ -10,6 +10,12 @@ eps = 10 ** (-9)
 kEps :: Float
 kEps = 10 ** (-4)
 
+cEps :: Float
+cEps = 10 ** (-3)
+
+pEps :: Float
+pEps = 10 ** (-5)
+
 isZero :: Float -> Bool
 isZero x = x > (-eps) && x < eps
 

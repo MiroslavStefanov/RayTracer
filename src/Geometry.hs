@@ -36,8 +36,7 @@ data Geometry =
   Cone {
     position :: Vec.Vector,
     radius :: Float,
-    height :: Float,
-    phiMax :: Float
+    height :: Float
   }
   
 
@@ -122,10 +121,77 @@ intersect ray@(start, direction) (Triangle aa bb cc)
           newCoords = (uu, vv)
 
 intersect ray@(start, direction)
-          (Parallelepiped position aa bb cc _) = Nothing
+          paral@(Parallelepiped position aa bb cc (aLen, bLen, cLen))
+  |abs f1 <= pEps && ((-e1) - aLen > 0 || (-e1) + aLen < 0) = Nothing
+  |t1Min > t1Max || t1Max < 0 = Nothing
+  |abs f2 <= pEps && ((-e2) - bLen > 0 || (-e2) + bLen < 0) = Nothing
+  |t2Min > t2Max || t2Max < 0 = Nothing
+  |abs f3 <= pEps && ((-e3) - cLen > 0 || (-e3) + cLen < 0) = Nothing
+  |t3Min > t3Max || t3Max < 0 = Nothing
+  |otherwise = Just (Intersection hitPoint
+                                  localNormal
+                                  (InvalidTexture "blank")
+                                  t
+                                  newCoords)
+    where
+      tmin = -99999.9
+      tmax = 99999.9
+      vcP = Vec.subtract position start
+      localRay = (vcP, direction)
+      --1st slab
+      e1 = Vec.dot aa vcP
+      f1 = Vec.dot aa direction
+      t11 = (e1 + aLen) / f1
+      t12 = (e1 - aLen) / f1
+      t1Min = max tmin $ min t11 t12
+      t1Max = min tmax $ max t11 t12
+      --2nd slab
+      e2 = Vec.dot bb vcP
+      f2 = Vec.dot bb direction
+      t21 = (e2 + bLen) / f2
+      t22 = (e2 - bLen) / f2
+      t2Min = max t1Min $ min t21 t22
+      t2Max = min t1Max $ max t21 t22
+      --3rd slab
+      e3 = Vec.dot cc vcP
+      f3 = Vec.dot cc direction
+      t31 = (e3 + cLen) / f3
+      t32 = (e3 - cLen) / f3
+      t3Min = max t2Min $ min t31 t32
+      t3Max = min t2Max $ max t31 t32
+      t = if t3Min > 0 then t3Min else t3Max
+      localHitPoint = scaleTo t localRay
+      localNormal = computeNormalAtPoint paral localHitPoint
+      hitPoint = scaleTo t ray
+      newCoords = (0, 0)
 
-intersect ray@(start, direction)
-          (Cone position radius height phiMax) = Nothing          
+intersect ray@(origStart, origDirection)
+          cone@(Cone position radius height)
+  |abs delta < cEps || delta < 0 = Nothing
+  |r <= Vec.yy position || r >= Vec.yy position + height = Nothing
+  |otherwise = Just (Intersection hitPoint
+                                  localNormal
+                                  (InvalidTexture "blank")
+                                  t
+                                  newCoords)
+    where
+      localRay@(start, direction) = (Vec.subtract origStart position, origDirection)
+      a = Vec.xx start - Vec.xx position
+      b = Vec.zz start - Vec.zz position
+      d = height - Vec.yy start + Vec.yy position
+      tang = (radius / height)^2
+      aa = Vec.xx direction ^ 2 + Vec.zz direction ^ 2 - tang * (Vec.yy direction^2)
+      bb = 2 * a * Vec.xx direction + 2 * b * Vec.zz direction + 2 * tang * d * Vec.yy direction
+      cc = a^2 + b^2 - tang * d^2
+      delta = bb^2 - 4 * aa * cc
+      t1 = (-b) - sqrt delta / (2 * a)
+      t2 = (-b) + sqrt delta / (2 * a)
+      t = min t1 t2
+      r = Vec.yy start + t * Vec.yy direction
+      localHitPoint = scaleTo t localRay
+      localNormal = computeNormalAtPoint cone localHitPoint
+      hitPoint = scaleTo t ray
+      newCoords = (0, 0)
 
 intersect ray@(origStart, origDirection)
           torus@(Torus position sRadius tRadius)
@@ -143,17 +209,18 @@ intersect ray@(origStart, origDirection)
       dx = Vec.xx direction
       dy = Vec.yy direction
       dz = Vec.zz direction
-      sumDSqrd = dx^2 + dy^2 + dz^2
+      sumDSqrd = Vec.lengthSqr direction
       e = ox^2 + oy^2 + oz^2 - sRadius^2 - tRadius^2
       f = ox * dx + oy * dy + oz * dz
-      fourASqrd = 4 * sRadius^2
+      fourASqrd = 4.0 * sRadius^2
       coeffs = (e^2 - fourASqrd * (tRadius^2 - oy^2),
                 4 * f * e + 2 * fourASqrd * oy * dy,
                 2 * sumDSqrd * e + 4 * f^2 + fourASqrd * dy^2,
                 4 * sumDSqrd * f,
                 sumDSqrd^2)
-      solution = filter (>kEps) (solve4 coeffs)
-      minT = minimum solution               
+      --solution = filter (>kEps) (solve4 coeffs)
+      solution = solve4 coeffs
+      minT = minimum solution
       localHitPoint = scaleTo minT localRay
       localNormal = computeNormalAtPoint torus localHitPoint
       hitPoint = scaleTo minT ray
@@ -167,3 +234,32 @@ computeNormalAtPoint (Torus position sRadius tRadius) (xx, yy, zz) = Vec.normali
     result = (4 * xx * (sumSquared - paramSquared),
               4 * yy * (sumSquared - paramSquared + 2 * sRadius^2),
               4 * zz * (sumSquared - paramSquared))
+computeNormalAtPoint (Cone position radius height) (xx, yy, zz) = Vec.normalize (newX, newY, newZ)
+  where
+    newX = xx - Vec.xx position
+    newZ = zz - Vec.zz position
+    r = sqrt $ newX^2 + newZ^2
+    newY = r * (radius / height)
+computeNormalAtPoint (Parallelepiped position aa bb cc (aLen, bLen, cLen)) point
+  |s1Dot0 = Vec.zeroDotNormalized aa bb cc $ vecsOnSides !! 0
+  |s2Dot0 = Vec.zeroDotNormalized aa bb cc $ vecsOnSides !! 1
+  |s3Dot0 = Vec.zeroDotNormalized aa bb cc $ vecsOnSides !! 2
+  |s4Dot0 = Vec.zeroDotNormalized aa bb cc $ vecsOnSides !! 3
+  |s5Dot0 = Vec.zeroDotNormalized aa bb cc $ vecsOnSides !! 4
+  |s6Dot0 = Vec.zeroDotNormalized aa bb cc $ vecsOnSides !! 5
+    where
+      s1 = Vec.add position $ Vec.scale aLen aa
+      s2 = Vec.subtract position $ Vec.scale aLen aa
+      s3 = Vec.add position $ Vec.scale bLen bb
+      s4 = Vec.subtract position $ Vec.scale bLen bb
+      s5 = Vec.add position $ Vec.scale cLen cc
+      s6 = Vec.subtract position $ Vec.scale cLen cc
+      vecsOnSides = map (Vec.subtract point) [s1,s2,s3,s4,s5,s6]
+      s1Dot0 = any ((<eps).abs.Vec.dot (vecsOnSides !! 0)) [aa, bb, cc]
+      s2Dot0 = any ((<eps).abs.Vec.dot (vecsOnSides !! 1)) [aa, bb, cc]
+      s3Dot0 = any ((<eps).abs.Vec.dot (vecsOnSides !! 2)) [aa, bb, cc]
+      s4Dot0 = any ((<eps).abs.Vec.dot (vecsOnSides !! 3)) [aa, bb, cc]
+      s5Dot0 = any ((<eps).abs.Vec.dot (vecsOnSides !! 4)) [aa, bb, cc]
+      s6Dot0 = any ((<eps).abs.Vec.dot (vecsOnSides !! 5)) [aa, bb, cc]
+      eps = 10 ** (-1)
+
