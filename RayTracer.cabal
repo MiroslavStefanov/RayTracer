@@ -4,11 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
-<<<<<<< HEAD
 -- hash: 95a1c15cbca2075fefcb627a9524b161b4ffe255595d7a48c8303e515a5937a5
-=======
--- hash: 94fa73f3bcb5f29fa374b653bd9241960917bbe958b036e8886f70ddaabb7e70
->>>>>>> 1e1653b0b1240a3a248e42cbc8f62e99fb789ee1
 
 name:           RayTracer
 version:        0.1.0.0

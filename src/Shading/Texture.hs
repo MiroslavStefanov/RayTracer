@@ -18,7 +18,5 @@ data Texture =
   FrenselTexture {
     eta :: Float
   } |
-  TransparentTexture {
-    eta :: Float
-  }
+  TransparentTexture
   deriving (Show, Eq)

@@ -70,13 +70,10 @@ getIntersectionTracer = Tracer $ \(TracingPass intersections r) ->
 anyIntersectionsTracer :: Tracer Bool 
 anyIntersectionsTracer = Tracer $ \pass@(TracingPass intersections rays) -> Right (pass, not (null intersections))
 
-indexTexelsTracer :: Int -> Int -> Tracer (FrameBuffer Texel)
-indexTexelsTracer w h = Tracer $ \pass -> Right (pass, createBuffer w h)
-
-shootCameraRayTracer :: Camera.PinholeCamera -> Float -> Texel -> Tracer ShadingDensity
-shootCameraRayTracer camera cameraEta texel = let
+shootCameraRayTracer :: Camera.PinholeCamera  -> Texel -> Tracer ShadingDensity
+shootCameraRayTracer camera texel = let
   cameraRay = Camera.getRay texel camera
-  cameraIntersection = Intersection (Camera.position camera) (Camera.target camera) (TransparentTexture cameraEta) 0 (0,0)
+  cameraIntersection = Intersection (Camera.position camera) (normalize $ Camera.target camera `subtract` Camera.position camera) TransparentTexture 0 (0,0)
   in do
     shootRayTracer cameraRay
     return [(Right $ ShadingContext cameraRay cameraIntersection, 1)]

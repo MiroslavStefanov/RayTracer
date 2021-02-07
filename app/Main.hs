@@ -2,13 +2,14 @@ module Main where
 
 import Lib
 import Geometry
-import Tracing.Scene
+import Tracing.Scene ( Scene(Scene) )
+import Tracing.Mesh ( Mesh(Mesh) )
 import qualified LightSource as LS
 import Shading.Color
 import Shading.Texture
 import Shading.Sampler
-import Base
-import PinholeCamera
+import PinholeCamera ( Perspective, createPerspective )
+
 
 scene1 :: Scene
 scene1 = scene
@@ -23,14 +24,14 @@ scene1 = scene
     leftPlaneTexture = PhongTexture (ConstantColorSampler (Rgb 1 0 0)) 0 8
     rightPlaneTexture = PhongTexture (ConstantColorSampler (Rgb 0 0 1)) 0 8
     sphereTexture = PhongTexture (CheckerSampler (Rgb 1 0 0) (Rgb 0 0 1) 0.03) 6 10
-    meshBottomPlane = makeMesh bottomPlane bottomPlaneTexture
-    meshTopPlane = makeMesh topPlane topPlaneTexture
-    meshLeftPlane = makeMesh leftPlane leftPlaneTexture
-    meshRightPlane = makeMesh rightPlane rightPlaneTexture
-    meshSphere = makeMesh sphere sphereTexture
+    meshBottomPlane = Mesh bottomPlane bottomPlaneTexture
+    meshTopPlane = Mesh topPlane topPlaneTexture
+    meshLeftPlane = Mesh leftPlane leftPlaneTexture
+    meshRightPlane = Mesh rightPlane rightPlaneTexture
+    meshSphere = Mesh sphere sphereTexture
     light = LS.PointLight 650 (Rgb 1 1 1) (10, 20, 30)
     light2 = LS.PointLight 650 (Rgb 1 0 1) (5, 20, 30)
-    scene = Scene [meshBottomPlane, meshTopPlane, meshLeftPlane, meshRightPlane, meshSphere] [light, light2]
+    scene = Scene [meshBottomPlane, meshTopPlane, meshLeftPlane, meshRightPlane, meshSphere] [light]
   
 scene2 :: Scene
 scene2 = scene
@@ -47,12 +48,12 @@ scene2 = scene
     rightPlaneTexture = PhongTexture (ConstantColorSampler (Rgb 0 0 1)) 0 8
     sphereTexture = PhongTexture (CheckerSampler (Rgb 1 0 0) (Rgb 0 0 1) 0.03) 6 10
     triangleTexture = FrenselTexture 1.33
-    meshBottomPlane = makeMesh bottomPlane bottomPlaneTexture
-    meshTopPlane = makeMesh topPlane topPlaneTexture
-    meshLeftPlane = makeMesh leftPlane leftPlaneTexture
-    meshRightPlane = makeMesh rightPlane rightPlaneTexture
-    meshSphere = makeMesh sphere sphereTexture
-    meshTriangle = makeMesh triangle triangleTexture
+    meshBottomPlane = Mesh bottomPlane bottomPlaneTexture
+    meshTopPlane = Mesh topPlane topPlaneTexture
+    meshLeftPlane = Mesh leftPlane leftPlaneTexture
+    meshRightPlane = Mesh rightPlane rightPlaneTexture
+    meshSphere = Mesh sphere sphereTexture
+    meshTriangle = Mesh triangle triangleTexture
     light = LS.PointLight 650 (Rgb 1 1 1) (10, 20, 30)
     scene = Scene [meshBottomPlane, meshTopPlane, meshLeftPlane, meshRightPlane, meshSphere, meshTriangle] [light]
 
