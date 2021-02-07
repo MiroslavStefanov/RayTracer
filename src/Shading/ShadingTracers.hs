@@ -29,7 +29,7 @@ shootRaysFromIntersectionTracer scene = foldlM tracer [] where
                 reflectedRay = (position intersection, reflectedDirection)
                 maybeTransmittedDirection = Vector.refract (normal intersection) rayDirection 1 eta
                 reflectionRatio = Vector.rSchlick2 (normal intersection) rayDirection 1 eta
-                newIntersection = addTexture intersection (TransparentTexture eta)
+                newIntersection = addTexture intersection TransparentTexture
                 resultDensity = (Right$ SContext.ShadingContext reflectedRay newIntersection, reflectionRatio * weight) :  totalDensity
                 in do
                   shootRayTracer reflectedRay
@@ -59,7 +59,7 @@ shadeTracer scene = mapM tracer where
             accumulatedLightContributions = foldl Shading.Color.add (Rgb 0 0 0) shadedColors
             in
               return (Left $ clamp accumulatedLightContributions, weight)
-        TransparentTexture eta -> do
+        TransparentTexture -> do
           newIntersection <- getIntersectionTracer
           case newIntersection of
             Nothing -> return (Left white, weight)

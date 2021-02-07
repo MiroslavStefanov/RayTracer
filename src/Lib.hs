@@ -52,9 +52,10 @@ getColorTracer density = foldlM addWeightedColorTracer (Rgb 0 0 0) density where
       Right _ -> abortTracer recursionDepthNotEnoughErrorMessage
 
 renderSceneTracer :: Int -> Int -> PinholeCamera -> Scene -> Int -> Tracer (FrameBuffer Rgb)
-renderSceneTracer bufferWidth bufferHeight camera scene maxRecursionDepth = do
-  indexedBuffer <- indexTexelsTracer bufferWidth bufferHeight
-  initialBuffer <- transformBufferTracer (shootCameraRayTracer camera 1) indexedBuffer
+renderSceneTracer bufferWidth bufferHeight camera scene maxRecursionDepth = 
+  let indexedBuffer = createBuffer bufferWidth bufferHeight
+  in do
+  initialBuffer <- transformBufferTracer (shootCameraRayTracer camera) indexedBuffer
   shadedBuffer <- shadeFrameBufferTracer scene initialBuffer maxRecursionDepth
   transformBufferTracer getColorTracer shadedBuffer
 

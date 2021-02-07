@@ -28,11 +28,10 @@ getLightContribution
     lambertCoefficient = Vec.dot directionToLight $ normal intersection
     lightFactor = lightIntensity / Vec.lengthSqr vectorToLight
     reflectedVector = Vec.reflect (Vec.invert directionToLight) $ normal intersection
-    phongCoefficient = max 0.0 $ Vec.dot (Vec.invert rayDirection) reflectedVector ** specularExponent (texture intersection)
+    phongCoefficient = max 0.0 (Vec.dot (Vec.invert rayDirection) reflectedVector) ** specularExponent (texture intersection)
 
     lightFinalColor = scale (lambertCoefficient * lightFactor) lightColor
     specularColor = scale (phongCoefficient * lightFactor * specularMultiplier (texture intersection)) white
     diffuseColor = sample (diffuseSampler $ texture intersection) $ coordinates intersection
     in
       multiply diffuseColor $ add lightFinalColor specularColor
-
