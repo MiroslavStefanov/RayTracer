@@ -137,7 +137,6 @@ intersect ray@(start, direction)
       tmin = -99999.9
       tmax = 99999.9
       vcP = Vec.subtract position start
-      localRay = (vcP, direction)
       --1st slab
       e1 = Vec.dot aa vcP
       f1 = Vec.dot aa direction
@@ -160,8 +159,7 @@ intersect ray@(start, direction)
       t3Min = max t2Min $ min t31 t32
       t3Max = min t2Max $ max t31 t32
       t = if t3Min > 0 then t3Min else t3Max
-      localHitPoint = scaleTo t localRay
-      localNormal = computeNormalAtPoint paral localHitPoint
+      localNormal = computeNormalAtPoint paral hitPoint
       hitPoint = scaleTo t ray
       newCoords = (0, 0)
 
@@ -261,5 +259,5 @@ computeNormalAtPoint (Parallelepiped position aa bb cc (aLen, bLen, cLen)) point
       s4Dot0 = any ((<eps).abs.Vec.dot (vecsOnSides !! 3)) [aa, bb, cc]
       s5Dot0 = any ((<eps).abs.Vec.dot (vecsOnSides !! 4)) [aa, bb, cc]
       s6Dot0 = any ((<eps).abs.Vec.dot (vecsOnSides !! 5)) [aa, bb, cc]
-      eps = 10 ** (-1)
+      eps = 10 ** (-5)
 
