@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 95a1c15cbca2075fefcb627a9524b161b4ffe255595d7a48c8303e515a5937a5
+-- hash: e62f061dc25a32f83bdf2dbc2d713f09fd616bfaa33c6c614138a06942dec4ab
 
 name:           RayTracer
 version:        0.1.0.0
@@ -47,6 +47,7 @@ library
       Solver
       Tracing.Mesh
       Tracing.Scene
+      Tracing.SceneEditor
       Tracing.Tracer
       Tracing.TracingPass
       Vector
@@ -90,6 +91,7 @@ test-suite RayTracer-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      GeometryIntersect_Test
       Tracing.Tracer_Test
       Paths_RayTracer
   hs-source-dirs:

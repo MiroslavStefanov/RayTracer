@@ -117,7 +117,7 @@ intersect ray@(start, direction) (Triangle aa bb cc)
           vv = invDet * Vec.dot qVec normDirection
           distance = invDet * Vec.dot e2 qVec
           newPosition = scaleTo distance ray
-          normal = Vec.cross e1 e2
+          normal = Vec.normalize $ Vec.cross e1 e2
           newCoords = (uu, vv)
 
 intersect ray@(start, direction)
@@ -239,12 +239,12 @@ computeNormalAtPoint (Cone position radius height) (xx, yy, zz) = Vec.normalize 
     r = sqrt $ newX^2 + newZ^2
     newY = r * (radius / height)
 computeNormalAtPoint (Parallelepiped position aa bb cc (aLen, bLen, cLen)) point
-  |s1Dot0 = Vec.zeroDotNormalized aa bb cc $ vecsOnSides !! 0
-  |s2Dot0 = Vec.zeroDotNormalized aa bb cc $ vecsOnSides !! 1
-  |s3Dot0 = Vec.zeroDotNormalized aa bb cc $ vecsOnSides !! 2
-  |s4Dot0 = Vec.zeroDotNormalized aa bb cc $ vecsOnSides !! 3
-  |s5Dot0 = Vec.zeroDotNormalized aa bb cc $ vecsOnSides !! 4
-  |s6Dot0 = Vec.zeroDotNormalized aa bb cc $ vecsOnSides !! 5
+  |s1Dot0 = Vec.normalize $ s1 `Vec.subtract` position
+  |s2Dot0 = Vec.normalize $ s2 `Vec.subtract` position
+  |s3Dot0 = Vec.normalize $ s3 `Vec.subtract` position
+  |s4Dot0 = Vec.normalize $ s4 `Vec.subtract` position
+  |s5Dot0 = Vec.normalize $ s5 `Vec.subtract` position
+  |s6Dot0 = Vec.normalize $ s6 `Vec.subtract` position
     where
       s1 = Vec.add position $ Vec.scale aLen aa
       s2 = Vec.subtract position $ Vec.scale aLen aa
@@ -253,11 +253,11 @@ computeNormalAtPoint (Parallelepiped position aa bb cc (aLen, bLen, cLen)) point
       s5 = Vec.add position $ Vec.scale cLen cc
       s6 = Vec.subtract position $ Vec.scale cLen cc
       vecsOnSides = map (Vec.subtract point) [s1,s2,s3,s4,s5,s6]
-      s1Dot0 = any ((<eps).abs.Vec.dot (vecsOnSides !! 0)) [aa, bb, cc]
-      s2Dot0 = any ((<eps).abs.Vec.dot (vecsOnSides !! 1)) [aa, bb, cc]
-      s3Dot0 = any ((<eps).abs.Vec.dot (vecsOnSides !! 2)) [aa, bb, cc]
-      s4Dot0 = any ((<eps).abs.Vec.dot (vecsOnSides !! 3)) [aa, bb, cc]
-      s5Dot0 = any ((<eps).abs.Vec.dot (vecsOnSides !! 4)) [aa, bb, cc]
-      s6Dot0 = any ((<eps).abs.Vec.dot (vecsOnSides !! 5)) [aa, bb, cc]
+      s1Dot0 = ((<eps).abs.Vec.dot (vecsOnSides !! 0)) aa
+      s2Dot0 = ((<eps).abs.Vec.dot (vecsOnSides !! 1)) aa
+      s3Dot0 = ((<eps).abs.Vec.dot (vecsOnSides !! 2)) bb
+      s4Dot0 = ((<eps).abs.Vec.dot (vecsOnSides !! 3)) bb
+      s5Dot0 = ((<eps).abs.Vec.dot (vecsOnSides !! 4)) cc
+      s6Dot0 = ((<eps).abs.Vec.dot (vecsOnSides !! 5)) cc
       eps = 10 ** (-5)
 
