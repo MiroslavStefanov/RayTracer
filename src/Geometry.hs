@@ -37,7 +37,7 @@ data Geometry =
     position :: Vec.Vector,
     radius :: Float,
     height :: Float
-  }
+  } deriving (Show, Eq)
   
 
 makePlane :: Vec.Vector -> Vec.Vector -> Geometry
@@ -117,7 +117,7 @@ intersect ray@(start, direction) (Triangle aa bb cc)
           vv = invDet * Vec.dot qVec normDirection
           distance = invDet * Vec.dot e2 qVec
           newPosition = scaleTo distance ray
-          normal = Vec.cross e1 e2
+          normal = Vec.normalize $ Vec.cross e1 e2
           newCoords = (uu, vv)
 
 intersect ray@(start, direction)
@@ -253,11 +253,11 @@ computeNormalAtPoint (Parallelepiped position aa bb cc (aLen, bLen, cLen)) point
       s5 = Vec.add position $ Vec.scale cLen cc
       s6 = Vec.subtract position $ Vec.scale cLen cc
       vecsOnSides = map (Vec.subtract point) [s1,s2,s3,s4,s5,s6]
-      s1Dot0 = any ((<eps).abs.Vec.dot (vecsOnSides !! 0)) [aa, bb, cc]
-      s2Dot0 = any ((<eps).abs.Vec.dot (vecsOnSides !! 1)) [aa, bb, cc]
-      s3Dot0 = any ((<eps).abs.Vec.dot (vecsOnSides !! 2)) [aa, bb, cc]
-      s4Dot0 = any ((<eps).abs.Vec.dot (vecsOnSides !! 3)) [aa, bb, cc]
-      s5Dot0 = any ((<eps).abs.Vec.dot (vecsOnSides !! 4)) [aa, bb, cc]
-      s6Dot0 = any ((<eps).abs.Vec.dot (vecsOnSides !! 5)) [aa, bb, cc]
+      s1Dot0 = ((<eps).abs.Vec.dot (vecsOnSides !! 0)) aa
+      s2Dot0 = ((<eps).abs.Vec.dot (vecsOnSides !! 1)) aa
+      s3Dot0 = ((<eps).abs.Vec.dot (vecsOnSides !! 2)) bb
+      s4Dot0 = ((<eps).abs.Vec.dot (vecsOnSides !! 3)) bb
+      s5Dot0 = ((<eps).abs.Vec.dot (vecsOnSides !! 4)) cc
+      s6Dot0 = ((<eps).abs.Vec.dot (vecsOnSides !! 5)) cc
       eps = 10 ** (-5)
 
