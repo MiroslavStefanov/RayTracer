@@ -89,7 +89,7 @@ scene4 = scene
     topPlane = Plane (0, 0, 45) (0, 0, -1)
     leftPlane = Plane (-20, 0, 0) (1, 0, 0)
     rightPlane = Plane (20, 0, 0) (-1, 0, 0)
-    obb = Parallelepiped (5, 20, 5) (1,0,0) (0,1,0) (0,0,1) (3,4,5)
+    obb = Parallelepiped (5, 45, 10) (1,0,0) (0,1,0) (0,0,1) (2,2,2)
     --cone = Cone (5, 25, 6) 2 7
     --triangle = Triangle (-15, 40, 0) (15, 60, 0) (0, 33, 27)
     bottomPlaneTexture = PhongTexture (CheckerSampler white (Rgb 0 0 0) 3.0) 0 8
@@ -97,6 +97,7 @@ scene4 = scene
     leftPlaneTexture = PhongTexture (ConstantColorSampler (Rgb 1 0 0)) 0 8
     rightPlaneTexture = PhongTexture (ConstantColorSampler (Rgb 0 0 1)) 0 8
     obbTexture = PhongTexture (ConstantColorSampler (Rgb 1 1 0)) 0 8
+    --obbTexture = NormalTexture
     --coneTexture = PhongTexture (ConstantColorSampler (Rgb 1 1 0)) 0 8
     --coneTexture = ColorTexture (Rgb 1 1 0)
     --triangleTexture = FrenselTexture 1.33
@@ -109,7 +110,7 @@ scene4 = scene
     --meshCone = makeMesh cone coneTexture
     light = LS.PointLight 650 (Rgb 1 1 1) (10, 20, 30)
     light2 = LS.PointLight 650 (Rgb 1 0 1) (5, 20, 30)
-    scene = Scene [meshBottomPlane, meshTopPlane, meshLeftPlane, meshRightPlane, meshObb] [light, light2]    
+    scene = Scene [meshBottomPlane, meshTopPlane, meshLeftPlane, meshRightPlane, meshObb] [light]    
 
 perspective :: Perspective
 perspective = createPerspective (0, 0, 10) (0, 1, 10) (0, 0, 1) (pi/2.5) 400 400

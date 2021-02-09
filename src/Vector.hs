@@ -67,13 +67,6 @@ maxDot a b c
     where dots@[aDot, bDot, cDot] = map (\x -> dot x x) [a, b, c]
           maxDot = maximum dots
 
-zeroDotNormalized :: Vector -> Vector -> Vector -> Vector -> Vector
-zeroDotNormalized aa bb cc point
-  |abs (aa `dot` point) < eps = normalize aa
-  |abs (bb `dot` point) < eps = normalize bb
-  |abs (cc `dot` point) < eps = normalize cc
-    where eps = 10 ** (-5)
-
 refract :: Vector -> Vector -> Float -> Float -> Maybe Vector
 refract normal incident n1 n2
   |sinT2 > 1 = Nothing

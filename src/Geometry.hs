@@ -239,12 +239,12 @@ computeNormalAtPoint (Cone position radius height) (xx, yy, zz) = Vec.normalize 
     r = sqrt $ newX^2 + newZ^2
     newY = r * (radius / height)
 computeNormalAtPoint (Parallelepiped position aa bb cc (aLen, bLen, cLen)) point
-  |s1Dot0 = Vec.zeroDotNormalized aa bb cc $ vecsOnSides !! 0
-  |s2Dot0 = Vec.zeroDotNormalized aa bb cc $ vecsOnSides !! 1
-  |s3Dot0 = Vec.zeroDotNormalized aa bb cc $ vecsOnSides !! 2
-  |s4Dot0 = Vec.zeroDotNormalized aa bb cc $ vecsOnSides !! 3
-  |s5Dot0 = Vec.zeroDotNormalized aa bb cc $ vecsOnSides !! 4
-  |s6Dot0 = Vec.zeroDotNormalized aa bb cc $ vecsOnSides !! 5
+  |s1Dot0 = Vec.normalize $ s1 `Vec.subtract` position
+  |s2Dot0 = Vec.normalize $ s2 `Vec.subtract` position
+  |s3Dot0 = Vec.normalize $ s3 `Vec.subtract` position
+  |s4Dot0 = Vec.normalize $ s4 `Vec.subtract` position
+  |s5Dot0 = Vec.normalize $ s5 `Vec.subtract` position
+  |s6Dot0 = Vec.normalize $ s6 `Vec.subtract` position
     where
       s1 = Vec.add position $ Vec.scale aLen aa
       s2 = Vec.subtract position $ Vec.scale aLen aa
