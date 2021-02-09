@@ -37,7 +37,7 @@ data Geometry =
     position :: Vec.Vector,
     radius :: Float,
     height :: Float
-  }
+  } deriving (Show, Read, Eq)
   
 
 makePlane :: Vec.Vector -> Vec.Vector -> Geometry

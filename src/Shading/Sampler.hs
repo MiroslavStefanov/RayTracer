@@ -11,7 +11,7 @@ data Sampler =
     color1 :: Rgb,
     color2 :: Rgb,
     size :: Float 
-  } deriving (Show, Eq)
+  } deriving (Show, Read, Eq)
 
 sample :: Sampler -> Texel -> Rgb
 sample (ConstantColorSampler color) _ = color

@@ -7,6 +7,7 @@ module Lib
 import Base
 import Tracing.Scene
 import Tracing.Tracer
+import qualified Tracing.SceneEditor as Editor
 import PinholeCamera
 import Shading.FrameBuffer
 import Shading.Color
@@ -28,6 +29,7 @@ import Geometry
 import Data.Foldable (foldlM)
 import Data.Time.Clock
 import Control.Monad (unless)
+import Data.Maybe ( fromMaybe )
 
 shadingStepTracer :: Scene -> FrameBuffer ShadingDensity -> Tracer (FrameBuffer ShadingDensity)
 shadingStepTracer scene buffer = do
@@ -91,17 +93,38 @@ exportImage scene (Perspective camera width height) recDepth outputName = do
     where      
       image = traceScene width height camera scene recDepth
 
-renderLoop :: SDL.Renderer -> FrameBuffer Rgb -> IO()
+renderLoop :: SDL.Renderer -> FrameBuffer Rgb -> IO Bool
 renderLoop renderer image = do
   events <- SDL.pollEvents
   if any (isKeyPress SDL.KeycodeQ) events
-    then return ()
-    else do
-      renderFrameBuffer renderer image
-      renderLoop renderer image
+  then return True
+  else if any (isKeyPress SDL.KeycodeE) events
+  then return False
+  else do
+    renderFrameBuffer renderer image
+    renderLoop renderer image
+
+editScene :: Scene -> IO (Scene, Maybe Int)
+editScene scene = do
+  putStrLn "To save changes enter 0"
+  putStrLn "To discard changes changes enter -1"
+  putStrLn "To add mesh enter 1"
+  putStrLn "To add light enter 2"
+  command <- (readLn :: IO Int)
+  case command of
+    -1 -> return (scene, Nothing)
+    0 -> do
+      putStrLn "Enter recursion depth for new scene tracing"
+      depth <- (readLn :: IO Int)
+      return (scene, Just depth)
+    1 -> Editor.addMesh scene >>= editScene
+    2 -> Editor.addLight scene >>= editScene
+    _ -> do
+      putStrLn $ "Unknow command " ++ show command
+      editScene scene
 
 renderScene :: Scene -> Perspective -> Int -> IO()
-renderScene scene (Perspective camera width height) recDepth = do
+renderScene scene perspective@(Perspective camera width height) recDepth = do
   startTime <- getCurrentTime
   case image of
     Right img -> do
@@ -109,7 +132,12 @@ renderScene scene (Perspective camera width height) recDepth = do
       endTime <- getCurrentTime
       print $ nominalDiffTimeToSeconds (endTime `diffUTCTime` startTime)
       (window, renderer) <- openWindow width height
-      renderLoop renderer img
+      shouldQuit <- renderLoop renderer img
+      if shouldQuit
+      then return ()
+      else do
+        (newScene, newRecursionDepth) <- editScene scene
+        renderScene newScene perspective $ fromMaybe recDepth newRecursionDepth
     Left (GeneralError msg) -> putStrLn $ "Error: " ++ msg
     where      
       image = traceScene width height camera scene recDepth
@@ -117,11 +145,10 @@ renderScene scene (Perspective camera width height) recDepth = do
 debugRenderLoop :: SDL.Renderer -> Scene -> FrameBuffer ShadingDensity -> TracingPass -> IO()
 debugRenderLoop renderer scene buffer@(FrameBuffer w h densities) pass = do
   events <- SDL.pollEvents
-  if any (isKeyPress SDL.KeycodeN) events
+  if any (isKeyPress SDL.KeycodeT) events
     then do
       putStrLn "Starting next tracing pass:"
-      print $ length $ outputRays pass
-      putStrLn "rays"
+      putStrLn $ show (length (outputRays pass)) ++ "rays"
       startTime <- getCurrentTime
       (nextPass, nextBuffer) <- preformTracingPass renderer scene buffer pass
       endTime <- getCurrentTime
@@ -146,3 +173,4 @@ debugRenderScene scene (Perspective camera width height) =
       (window, renderer) <- openWindow width height
       (initialPass, initialBuffer) <- preformTracingPass renderer scene initialBuffer initialPass
       debugRenderLoop renderer scene initialBuffer initialPass
+      

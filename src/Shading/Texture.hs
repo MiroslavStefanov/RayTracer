@@ -8,7 +8,7 @@ data Texture =
     error :: String
   } |
   ColorTexture {
-    color :: Rgb
+    colorSampler :: Sampler
   } | 
   PhongTexture {
     diffuseSampler :: Sampler,
@@ -19,4 +19,4 @@ data Texture =
     eta :: Float
   } |
   TransparentTexture
-  deriving (Show, Eq)
+  deriving (Show, Read, Eq)
