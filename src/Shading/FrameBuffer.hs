@@ -8,6 +8,9 @@ data FrameBuffer a = FrameBuffer{
   buffer :: [a]
 } deriving (Show, Eq)
 
+createEmptyBuffer :: FrameBuffer a
+createEmptyBuffer = FrameBuffer 0 0 []
+
 createBuffer :: Int -> Int -> FrameBuffer Texel
 createBuffer 0 _ = FrameBuffer 0 0 []
 createBuffer _ 0 = FrameBuffer 0 0 []
