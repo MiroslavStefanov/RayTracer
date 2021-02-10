@@ -10,7 +10,7 @@ data Intersection = Intersection {
   texture :: Texture,
   distance :: Float,
   coordinates :: Texel
-} deriving (Show, Eq)
+}
 
 addTexture :: Intersection -> Texture -> Intersection
 addTexture (Intersection pos normal _ distance coords) texture =
@@ -23,4 +23,13 @@ closerIntersection ii Nothing = ii
 closerIntersection i1@(Just (Intersection _ _ _ dist1 _))
                    i2@(Just (Intersection _ _ _ dist2 _))
   |dist1 < dist2 = i1
-  |otherwise = i2                   
+  |otherwise = i2    
+
+biasEpsilon :: Float
+biasEpsilon = 0.001
+
+getPositiveBiasedIntersectionPosition :: Intersection  -> Vector 
+getPositiveBiasedIntersectionPosition (Intersection position normal _ _ _) = position `add` scale biasEpsilon normal
+
+getNegativeBiasedIntersectionPostion :: Intersection -> Vector 
+getNegativeBiasedIntersectionPostion (Intersection position normal _ _ _) = position `Vector.subtract` scale biasEpsilon normal

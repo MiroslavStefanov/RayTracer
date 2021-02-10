@@ -3,20 +3,20 @@ module Shading.Texture where
 import Shading.Color
 import Shading.Sampler
 
-data Texture = 
-  InvalidTexture {
-    error :: String
-  } |
-  ColorTexture {
-    colorSampler :: Sampler
-  } | 
-  PhongTexture {
-    diffuseSampler :: Sampler,
-    specularMultiplier :: Float,
-    specularExponent :: Float
-  } |
-  FrenselTexture {
-    eta :: Float
-  } |
-  TransparentTexture
+data Material =
+  PhongMaterial Float Float |
+  ReflectiveMaterial Float |
+  FresnelMaterial Float Float |
+  NoMaterial
   deriving (Show, Read, Eq)
+
+data Texture = Texture {
+  diffuseSampler :: Sampler Rgb,
+  alphaSampler :: Sampler Float,
+  material :: Material
+}
+
+emptyTexture :: Texture
+emptyTexture = Texture emptyDiffuse emptyAlpha NoMaterial where
+  emptyDiffuse = Sampler undefined 
+  emptyAlpha = Sampler undefined

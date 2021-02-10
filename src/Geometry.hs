@@ -58,7 +58,7 @@ intersect ray@(start, direction)
   |scalar < 0 = Nothing
   |otherwise = Just (Intersection newPosition
                                   normal
-                                  (InvalidTexture "blank")
+                                  emptyTexture 
                                   scalar
                                   newCoords)
     where denom = Vec.dot normal direction
@@ -76,7 +76,7 @@ intersect ray@(start, direction)
   |xMin <= 0 = Nothing
   |otherwise = Just (Intersection newPosition
                                   newNormal
-                                  (InvalidTexture "blank")
+                                  emptyTexture
                                   xMin
                                   newCoords)
     where a = Vec.lengthSqr direction
@@ -100,7 +100,7 @@ intersect ray@(start, direction) (Triangle aa bb cc)
   |vv < 0 || uu + vv > 1 = Nothing
   |otherwise = Just (Intersection newPosition
                                   normal
-                                  (InvalidTexture "blank")
+                                  emptyTexture
                                   distance
                                   newCoords)
     where e1 = Vec.subtract bb aa
@@ -130,7 +130,7 @@ intersect ray@(start, direction)
   |t3Min > t3Max || t3Max < 0 = Nothing
   |otherwise = Just (Intersection hitPoint
                                   localNormal
-                                  (InvalidTexture "blank")
+                                  emptyTexture
                                   t
                                   newCoords)
     where
@@ -170,7 +170,7 @@ intersect ray@(origStart, origDirection)
   |r < Vec.zz position || r > Vec.zz position + height = Nothing
   |otherwise = Just (Intersection hitPoint
                                   localNormal
-                                  (InvalidTexture "blank")
+                                  emptyTexture
                                   tShapeHit
                                   newCoords)
     where
@@ -204,7 +204,7 @@ intersect ray@(origStart, origDirection)
   |null solution = Nothing
   |otherwise = Just (Intersection hitPoint
                                   localNormal
-                                  (InvalidTexture "blank")
+                                  emptyTexture
                                   minT
                                   newCoords)
     where

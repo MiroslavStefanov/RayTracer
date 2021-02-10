@@ -8,30 +8,28 @@ import qualified Vector as Vec
 import Shading.Texture
 import Shading.Sampler
 
-getShadowRayStartPoint :: Intersection -> Vec.Vector
-getShadowRayStartPoint (Intersection start normal _ _ _) = start
-
 getShadowMultiplier :: Maybe Intersection -> LS.LightSource -> Float
 getShadowMultiplier Nothing _ = 1.0
 getShadowMultiplier _ LS.AmbientLight {} = undefined
 getShadowMultiplier (Just intersection) (LS.PointLight _ _ lightPosition) = 
-  if distance intersection ^ 2 < distanceToLightSquared then 0 else 1.0 where
-    distanceToLightSquared = Vec.lengthSqr $ Vec.subtract rayStart lightPosition
-    rayStart = getShadowRayStartPoint intersection
+  if distance intersection ^ 2 < distanceToLightSquared then 1 - alpha else 1.0 where
+    distanceToLightSquared = Vec.lengthSqr $ rayOrigin `Vec.subtract` lightPosition
+    rayOrigin = getPositiveBiasedIntersectionPosition intersection
+    alpha = sample (alphaSampler $ texture intersection) $ coordinates intersection
 
-getLightContribution :: ShadingContext -> LS.LightSource -> Rgb
-getLightContribution 
-  (ShadingContext (rayStart, rayDirection) intersection) 
+getPhongLightingColor :: ShadingContext -> Float -> Float -> LS.LightSource -> Rgb
+getPhongLightingColor 
+  (ShadingContext (rayOrigin, rayDirection) intersection) specularMultiplier specularExponent
   (LS.PointLight lightIntensity lightColor lightPosition) = let
-    vectorToLight = Vec.subtract lightPosition $ position intersection
+    vectorToLight = lightPosition `Vec.subtract` position intersection
     directionToLight = Vec.normalize vectorToLight
     lambertCoefficient = Vec.dot directionToLight $ normal intersection
     lightFactor = lightIntensity / Vec.lengthSqr vectorToLight
-    reflectedVector = Vec.reflect (Vec.invert directionToLight) $ normal intersection
-    phongCoefficient = max 0.0 (Vec.dot (Vec.invert rayDirection) reflectedVector) ** specularExponent (texture intersection)
+    reflectedVector = Vec.invert directionToLight `Vec.reflect` normal intersection
+    phongCoefficient = max 0.0 (Vec.invert rayDirection `Vec.dot` reflectedVector) ** specularExponent
 
     lightFinalColor = scale (lambertCoefficient * lightFactor) lightColor
-    specularColor = scale (phongCoefficient * lightFactor * specularMultiplier (texture intersection)) white
+    specularColor = scale (phongCoefficient * lightFactor * specularMultiplier) white
     diffuseColor = sample (diffuseSampler $ texture intersection) $ coordinates intersection
     in
-      multiply diffuseColor $ add lightFinalColor specularColor
+      multiply diffuseColor lightFinalColor `add` specularColor

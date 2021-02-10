@@ -1,24 +1,20 @@
 module Shading.Sampler where
 
 import Base
-import Shading.Color
 
-data Sampler = 
-  ConstantColorSampler {
-    color :: Rgb
-  } |
-  CheckerSampler {
-    color1 :: Rgb,
-    color2 :: Rgb,
-    size :: Float 
-  } deriving (Show, Read, Eq)
+newtype Sampler a = Sampler (Texel -> a)
 
-sample :: Sampler -> Texel -> Rgb
-sample (ConstantColorSampler color) _ = color
-sample (CheckerSampler c1 c2 size) (u, v) = let
+sample :: Sampler a -> Texel -> a
+sample (Sampler f) = f
+
+constantSampler :: a -> Sampler a
+constantSampler = Sampler . const
+
+checkerSampler :: a -> a -> Float -> Sampler a
+checkerSampler primary secondary size = Sampler $ \(u, v) -> let
   x = mod (floor $ u / size :: Int) 2
   y = mod (floor $ v / size :: Int) 2
   in
     if x == y 
-      then c1
-      else c2
+      then primary
+      else secondary

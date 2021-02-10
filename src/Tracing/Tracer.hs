@@ -73,7 +73,7 @@ anyIntersectionsTracer = Tracer $ \pass@(TracingPass intersections rays) -> Righ
 shootCameraRayTracer :: Camera.PinholeCamera  -> Texel -> Tracer ShadingDensity
 shootCameraRayTracer camera texel = let
   cameraRay = Camera.getRay texel camera
-  cameraIntersection = Intersection (Camera.position camera) (normalize $ Camera.target camera `subtract` Camera.position camera) TransparentTexture 0 (0,0)
+  cameraIntersection = Intersection (Camera.position camera) (normalize $ Camera.target camera `subtract` Camera.position camera) emptyTexture 0 (0,0)
   in do
     shootRayTracer cameraRay
     return [(Right $ ShadingContext cameraRay cameraIntersection, 1)]
@@ -83,7 +83,7 @@ shootRayTowardsLightTracer
   intresection@(Intersection intPosition intNormal _ _ _)
   (LS.PointLight _ _ lightPosition) = 
     shootRayTracer rayToLight where
-      rayStart = getShadowRayStartPoint intresection
+      rayStart = getPositiveBiasedIntersectionPosition intresection
       rayDirection = normalize $ subtract lightPosition intPosition
       rayToLight = (Vector.add rayStart $ Vector.scale 0.001 rayDirection, rayDirection)
 

@@ -11,35 +11,35 @@ import qualified Vector
 
 import Control.Monad (replicateM)
 import Data.Foldable (foldlM)
-import Shading.Sampler (sample)
+import Shading.Sampler
 
 shootRaysFromIntersectionTracer :: Scene -> SContext.ShadingDensity -> Tracer SContext.ShadingDensity
 shootRaysFromIntersectionTracer scene = foldlM tracer [] where
-  tracer = \totalDensity (value, weight) -> do 
-    let appendedDensity = (value, weight) : totalDensity in
-      case value of
-        Left _ -> return appendedDensity
-        Right (SContext.ShadingContext (rayOrigin, rayDirection) intersection) ->
-          case texture intersection of
-              InvalidTexture errorMsg -> abortTracer errorMsg
-              ColorTexture {} -> return appendedDensity
-              PhongTexture {} -> mapM_ (shootRayTowardsLightTracer intersection) (lightSources scene) >> identityTracer appendedDensity
-              TransparentTexture {} -> return appendedDensity
-              FrenselTexture eta -> let
-                reflectedDirection = Vector.reflect rayDirection $ normal intersection
-                reflectedRay = (position intersection `Vector.add` (0.001 `Vector.scale` normal intersection), reflectedDirection)
-                maybeTransmittedDirection = Vector.refract (normal intersection) rayDirection 1 eta
-                reflectionRatio = min 1.0 (Vector.rSchlick2 (normal intersection) rayDirection eta 1)
-                newIntersection = addTexture intersection TransparentTexture
-                resultDensity = (Right$ SContext.ShadingContext reflectedRay newIntersection, reflectionRatio * weight) :  totalDensity
-                in do
-                  shootRayTracer reflectedRay
-                  case maybeTransmittedDirection of
-                    Just direction -> let transmittedRay = (position intersection `Vector.add` ((-0.001) `Vector.scale` normal intersection), direction) in
-                        shootRayTracer transmittedRay >>
-                        identityTracer ((Right $ SContext.ShadingContext transmittedRay newIntersection, (1 - reflectionRatio) * weight) : resultDensity)
-                    Nothing -> return resultDensity
-
+  tracer = \totalDensity d@(value, weight) -> do 
+    case value of
+      Left _ -> return $ d : totalDensity
+      Right (SContext.ShadingContext (rayOrigin, rayDirection) intersection) -> let 
+        t = texture intersection 
+        diffuse = diffuseSampler t
+        reflectedDirection = Vector.reflect rayDirection $ normal intersection
+        reflectedRay = (getPositiveBiasedIntersectionPosition intersection, reflectedDirection)
+        in case material t of
+            PhongMaterial _ _ -> mapM_ (shootRayTowardsLightTracer intersection) (lightSources scene) >> identityTracer (d : totalDensity)
+            FresnelMaterial eta strength -> let
+              newIntersection = addTexture intersection emptyTexture
+              ownColorDensity = (Left (sample diffuse (coordinates intersection)), (1 - strength) * weight) : totalDensity
+              reflectionRatio = min 1.0 (Vector.rSchlick2 (normal intersection) rayDirection 1 eta)
+              maybeTransmittedDirection = Vector.refract (normal intersection) rayDirection 1 eta
+              reflectedDensity = (Right (SContext.ShadingContext reflectedRay newIntersection), reflectionRatio * strength * weight)
+              in do
+                shootRayTracer reflectedRay
+                case maybeTransmittedDirection of
+                  Just direction -> let 
+                    transmittedRay = (getNegativeBiasedIntersectionPostion intersection, direction)
+                    transmittedDensity = (Right (SContext.ShadingContext transmittedRay newIntersection), (1 - reflectionRatio) * strength * weight)
+                    in shootRayTracer transmittedRay >> identityTracer (reflectedDensity : (transmittedDensity : ownColorDensity))
+                  Nothing -> return (reflectedDensity : ownColorDensity)
+              
 
 
 
@@ -48,22 +48,20 @@ shadeTracer scene = mapM tracer where
   tracer = \(value, weight) -> do
     case value of
       Left _ -> return (value, weight)
-      Right context@(SContext.ShadingContext incidentRay previousIntersection) -> case texture previousIntersection of
-        InvalidTexture msg -> abortTracer msg
-        ColorTexture sampler -> return (Left (sample sampler $ coordinates previousIntersection), weight)
-        PhongTexture {} -> do
-          shadowIntersections <- Control.Monad.replicateM (getLightSourcesCount scene) getIntersectionTracer
-          let 
-            shadowMultipliers = zipWith getShadowMultiplier shadowIntersections $ lightSources scene
-            colorSums = map (getLightContribution context) $ lightSources scene
-            shadedColors = zipWith Shading.Color.scale shadowMultipliers colorSums
-            accumulatedLightContributions = foldl Shading.Color.add (Rgb 0 0 0) shadedColors
-            in
-              return (Left $ clamp accumulatedLightContributions, weight)
-        TransparentTexture -> do
-          newIntersection <- getIntersectionTracer
-          case newIntersection of
-            Nothing -> return (Left white, weight)
-            Just intersection -> return (Right $ SContext.ShadingContext incidentRay intersection, weight)
-        FrenselTexture {} -> undefined
-
+      Right context@(SContext.ShadingContext incidentRay previousIntersection) -> let
+        t = texture previousIntersection
+        in case material t of
+          PhongMaterial specularMultiplier specularExponent -> do
+            shadowIntersections <- Control.Monad.replicateM (getLightSourcesCount scene) getIntersectionTracer
+            let 
+              shadowMultipliers = zipWith getShadowMultiplier shadowIntersections $ lightSources scene
+              colorSums = map (getPhongLightingColor context specularMultiplier specularExponent) $ lightSources scene
+              shadedColors = zipWith Shading.Color.scale shadowMultipliers colorSums
+              accumulatedLightContributions = foldl (Shading.Color.add . Shading.Color.clamp) (Rgb 0 0 0) shadedColors
+              in
+                return (Left accumulatedLightContributions, weight)
+          NoMaterial -> do
+            newIntersection <- getIntersectionTracer
+            case newIntersection of
+              Just intersection -> identityTracer (Right (SContext.ShadingContext incidentRay intersection), weight)
+              Nothing -> identityTracer (Left (Rgb weight weight weight), weight)
