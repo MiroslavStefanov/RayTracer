@@ -2,7 +2,7 @@ module Main where
 
 import Lib
 import Geometry
-import Tracing.Scene ( Scene(Scene) )
+import Tracing.Scene (addLightSrc,  Scene(Scene) )
 import Tracing.Mesh ( Mesh(Mesh) )
 import qualified LightSource as LS
 import Shading.Color
@@ -32,7 +32,7 @@ scene1 = scene
     meshSphere = Mesh sphere sphereTexture
     light = LS.PointLight 650 (Rgb 1 1 1) (10, 20, 30)
     light2 = LS.PointLight 650 (Rgb 1 0 1) (5, 20, 30)
-    scene = Scene [meshBottomPlane, meshTopPlane, meshLeftPlane, meshRightPlane, meshSphere] [light]
+    scene = addLightSrc (Scene [meshBottomPlane, meshTopPlane, meshLeftPlane, meshRightPlane, meshSphere] []) light
   
 scene2 :: Scene
 scene2 = scene
@@ -57,7 +57,7 @@ scene2 = scene
     meshSphere = Mesh sphere waterTexture
     meshTriangle = Mesh triangle triangleTexture
     light = LS.PointLight 650 (Rgb 1 1 1) (10, 20, 30)
-    scene = Scene [meshBottomPlane, meshTopPlane, meshLeftPlane, meshRightPlane, meshSphere, meshTriangle] [light]
+    scene = addLightSrc (Scene [meshBottomPlane, meshTopPlane, meshLeftPlane, meshRightPlane, meshSphere, meshTriangle] []) light
 
 scene3 :: Scene
 scene3 = scene
@@ -81,7 +81,7 @@ scene3 = scene
     meshTorus = Mesh torus torusTexture
     --meshTriangle = makeMesh triangle triangleTexture
     light = LS.PointLight 900 (Rgb 1 1 1) (10, 20, 30)
-    scene = Scene [meshBottomPlane, meshTopPlane, meshLeftPlane, meshRightPlane, meshTorus] [light]    
+    scene = addLightSrc (Scene [meshBottomPlane, meshTopPlane, meshLeftPlane, meshRightPlane, meshTorus] []) light    
 
 scene4 :: Scene
 scene4 = scene
@@ -112,7 +112,7 @@ scene4 = scene
     meshCone = Mesh cone coneTexture
     light = LS.PointLight 650 (Rgb 1 1 1) (10, 20, 30)
     light2 = LS.PointLight 650 (Rgb 1 0 1) (5, 20, 30)
-    scene = Scene [meshBottomPlane, meshTopPlane, meshLeftPlane, meshRightPlane, meshCone] [light]
+    scene = addLightSrc (Scene [meshBottomPlane, meshTopPlane, meshLeftPlane, meshRightPlane, meshCone] []) light
 
 -- scene6 :: Scene
 -- scene6 = scene

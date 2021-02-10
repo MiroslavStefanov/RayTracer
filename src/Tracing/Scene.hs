@@ -1,6 +1,7 @@
 module Tracing.Scene where
 
 import Tracing.TracingPass
+import Tracing.Tracer
 import Tracing.Mesh
 import Ray
 import Intersection
@@ -9,14 +10,14 @@ import Geometry
 
 data Scene = Scene {
   objects :: [Mesh],
-  lightSources :: [LightSource]
+  lightSources :: [Light]
 }
 
 addMesh :: Scene -> Mesh -> Scene
 addMesh (Scene objects l) mesh = Scene (mesh : objects) l
 
-addLightSrc :: Scene -> LightSource -> Scene
-addLightSrc (Scene o lightSources) light = Scene o (light : lightSources)
+addLightSrc :: LightSource s => Scene -> s -> Scene
+addLightSrc (Scene o lightSources) lightSrc = Scene o (getLighting lightSrc : lightSources)
 
 getLightSourcesCount :: Scene -> Int
 getLightSourcesCount = length . lightSources
@@ -33,3 +34,6 @@ traceRay (Scene objects _) ray =
 calculateNextTracingPass :: TracingPass -> Scene -> TracingPass
 calculateNextTracingPass (TracingPass _ rays) scene =
   TracingPass (map (traceRay scene) rays) []
+
+generateIntersectionsTracer :: Scene -> Tracer (Int, Int)
+generateIntersectionsTracer scene = Tracer $ \(TracingPass i rays) -> Right (calculateNextTracingPass (TracingPass [] $ reverse rays) scene, (Prelude.length i, Prelude.length rays))

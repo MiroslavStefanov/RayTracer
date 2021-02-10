@@ -4,16 +4,13 @@ module Tracing.Tracer where
 import Base
 import ErrorHandling.ErrorMessages
 import Tracing.TracingPass
-import Tracing.Scene
 import Vector
 import Ray
 import Intersection
 import qualified PinholeCamera as Camera
-import qualified LightSource as LS
 import Shading.FrameBuffer
 import Shading.ShadingContext
 import Shading.Color
-import Shading.ShadingUtils
 import Control.Applicative (Alternative (empty, many, (<|>)))
 import Data.Bifunctor (Bifunctor (second))
 import Prelude hiding (subtract)
@@ -78,15 +75,6 @@ shootCameraRayTracer camera texel = let
     shootRayTracer cameraRay
     return [(Right $ ShadingContext cameraRay cameraIntersection, 1)]
 
-shootRayTowardsLightTracer :: Intersection -> LS.LightSource -> Tracer ()
-shootRayTowardsLightTracer 
-  intresection@(Intersection intPosition intNormal _ _ _)
-  (LS.PointLight _ _ lightPosition) = 
-    shootRayTracer rayToLight where
-      rayStart = getPositiveBiasedIntersectionPosition intresection
-      rayDirection = normalize $ subtract lightPosition intPosition
-      rayToLight = (Vector.add rayStart $ Vector.scale 0.001 rayDirection, rayDirection)
-
 shootRayTowardsLightTracer _ _ = identityTracer ()
 
 shootReflectedRayTracer :: Intersection -> Ray -> Tracer Ray
@@ -99,6 +87,3 @@ transformBufferTracer :: (a -> Tracer b) -> FrameBuffer a -> Tracer (FrameBuffer
 transformBufferTracer func (FrameBuffer w h buff) = let
   newBuffer = mapM func buff in
     FrameBuffer w h <$> newBuffer
-
-generateIntersectionsTracer :: Scene -> Tracer (Int, Int)
-generateIntersectionsTracer scene = Tracer $ \(TracingPass i rays) -> Right (calculateNextTracingPass (TracingPass [] $ reverse rays) scene, (Prelude.length i, Prelude.length rays))

@@ -1,6 +1,5 @@
 module Shading.ShadingTracers where
 
-import Shading.ShadingUtils
 import qualified Shading.ShadingContext as SContext
 import Shading.Texture
 import Shading.Color
@@ -12,6 +11,8 @@ import qualified Vector
 import Control.Monad (replicateM)
 import Data.Foldable (foldlM)
 import Shading.Sampler
+import LightSource
+import Control.Monad.Zip (MonadZip(mzipWith))
 
 shootRaysFromIntersectionTracer :: Scene -> SContext.ShadingDensity -> Tracer SContext.ShadingDensity
 shootRaysFromIntersectionTracer scene = foldlM tracer [] where
@@ -24,7 +25,7 @@ shootRaysFromIntersectionTracer scene = foldlM tracer [] where
         reflectedDirection = Vector.reflect rayDirection $ normal intersection
         reflectedRay = (getPositiveBiasedIntersectionPosition intersection, reflectedDirection)
         in case material t of
-            PhongMaterial _ _ -> mapM_ (shootRayTowardsLightTracer intersection) (lightSources scene) >> identityTracer (d : totalDensity)
+            PhongMaterial _ _ -> mapM_ (`visibility` intersection) (lightSources scene) >> identityTracer (d : totalDensity)
             FresnelMaterial eta strength -> let
               newIntersection = addTexture intersection emptyTexture
               ownColorDensity = (Left (sample diffuse (coordinates intersection)), (1 - strength) * weight) : totalDensity
@@ -52,10 +53,10 @@ shadeTracer scene = mapM tracer where
         t = texture previousIntersection
         in case material t of
           PhongMaterial specularMultiplier specularExponent -> do
-            shadowIntersections <- Control.Monad.replicateM (getLightSourcesCount scene) getIntersectionTracer
+            shadowMultipliers <- mapM occlusion (lightSources scene)
             let 
-              shadowMultipliers = zipWith getShadowMultiplier shadowIntersections $ lightSources scene
-              colorSums = map (getPhongLightingColor context specularMultiplier specularExponent) $ lightSources scene
+              colorizer = \s -> lighting s context specularMultiplier specularExponent
+              colorSums = map colorizer $ lightSources scene
               shadedColors = zipWith Shading.Color.scale shadowMultipliers colorSums
               accumulatedLightContributions = foldl (Shading.Color.add . Shading.Color.clamp) (Rgb 0 0 0) shadedColors
               in
