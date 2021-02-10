@@ -209,23 +209,19 @@ intersect ray@(origStart, origDirection)
                                   newCoords)
     where
       localRay@(start, direction) = (Vec.subtract origStart position, origDirection)
-      ox = Vec.xx start
-      oy = Vec.yy start
       oz = Vec.zz start
-      dx = Vec.xx direction
-      dy = Vec.yy direction
       dz = Vec.zz direction
       sumDSqrd = Vec.lengthSqr direction
-      e = ox^2 + oy^2 + oz^2 - sRadius^2 - tRadius^2
-      f = ox * dx + oy * dy + oz * dz
+      e = Vec.lengthSqr start - sRadius^2 - tRadius^2
+      f = Vec.dot start direction
       fourASqrd = 4.0 * sRadius^2
-      coeffs = (e^2 - fourASqrd * (tRadius^2 - oy^2),
-                4 * f * e + 2 * fourASqrd * oy * dy,
-                2 * sumDSqrd * e + 4 * f^2 + fourASqrd * dy^2,
+      coeffs = (e^2 - fourASqrd * (tRadius^2 - oz^2),
+                4 * f * e + 2 * fourASqrd * oz * dz,
+                2 * sumDSqrd * e + 4 * f^2 + fourASqrd * dz^2,
                 4 * sumDSqrd * f,
                 sumDSqrd^2)
-      --solution = filter (>kEps) (solve4 coeffs)
-      solution = solve4 coeffs
+      solution = filter (>kEps) (solve4 coeffs)
+      --solution = solve4 coeffs
       minT = minimum solution
       localHitPoint = scaleTo minT localRay
       localNormal = computeNormalAtPoint torus localHitPoint
@@ -233,13 +229,13 @@ intersect ray@(origStart, origDirection)
       newCoords = (0, 0)
 
 computeNormalAtPoint :: Geometry -> Vec.Vector -> Vec.Vector
-computeNormalAtPoint (Torus position sRadius tRadius) (xx, yy, zz) = Vec.normalize result
+computeNormalAtPoint (Torus position sRadius tRadius) point@(xx, yy, zz) = Vec.normalize result
   where
     paramSquared = sRadius^2 + tRadius^2
-    sumSquared = xx^2 + yy^2 + zz^2
+    sumSquared = Vec.lengthSqr point
     result = (4 * xx * (sumSquared - paramSquared),
-              4 * yy * (sumSquared - paramSquared + 2 * sRadius^2),
-              4 * zz * (sumSquared - paramSquared))
+              4 * yy * (sumSquared - paramSquared),
+              4 * zz * (sumSquared - paramSquared + 2 * sRadius^2))
 computeNormalAtPoint (Cone position radius height) (xx, yy, zz) = Vec.normalize (newX, newY, newZ)
   where
     newX = xx - Vec.xx position

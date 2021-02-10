@@ -25,3 +25,4 @@ main = hspec $ do
       it "" testIntersectTriangleWithRay
       it "" testIntersectParallelepipedWithRay
       it "" testIntersectConeWithRay
+      it "" testIntersectTorusWithRay

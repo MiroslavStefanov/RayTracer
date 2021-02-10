@@ -21,6 +21,9 @@ testParallelepiped = Parallelepiped (0, 0, 15) (1, 0, 0) (0, 1, 0) (0, 0, 1) (5,
 testCone :: Geometry
 testCone = Cone (0, 0, 20) 5 15
 
+testTorus :: Geometry
+testTorus = Torus (0, 0, 10) 6 4
+
 testRay1 :: Ray
 testRay1 = ((0, 0, 0), (0, 0, 1))
 
@@ -38,6 +41,15 @@ testRay5 = ((5, 5, 0), (0, 0, 1))
 
 testRay6 :: Ray
 testRay6 = ((-6, 0, 22), (1, 0, 0))
+
+testRay7 :: Ray
+testRay7 = ((0, 2, 5), (0, 0, 1))
+
+testRay8 :: Ray
+testRay8 = ((2, 0, 5), (0, 0, 1))
+
+testRay9 :: Ray
+testRay9 = ((2, 2, 5), (0, 0, 1))
 
 testIntersectPlaneWithRay :: IO()
 testIntersectPlaneWithRay = hspec $ do
@@ -127,4 +139,22 @@ testIntersectConeWithRay = hspec $ do
                                                                 1.6666665
                                                                 (3.1415927,1.4666667))
     it "Should return Nothing" $ do
-      intersect testRay3 testCone `shouldBe` Nothing      
+      intersect testRay3 testCone `shouldBe` Nothing
+
+testIntersectTorusWithRay :: IO()
+testIntersectTorusWithRay = hspec $ do
+  describe "Intersect testTorus with testRays" $ do
+    it "Should return intersection at (0, 2, 10)" $ do
+      intersect testRay7 testTorus `shouldBe` Just (Intersection (0, 2, 10)
+                                                                 (0, -1, 0)
+                                                                 (InvalidTexture "blank")
+                                                                 5
+                                                                 (0, 0))
+    it "Should return Nothing at (2, 0, 10)" $ do
+      intersect testRay8 testTorus `shouldBe` Just (Intersection (2, 0, 10)
+                                                                 (-1, 0, 0)
+                                                                 (InvalidTexture "blank")
+                                                                 5
+                                                                 (0, 0))
+    it "Should return Nothing" $ do
+      intersect testRay9 testTorus `shouldBe` Nothing          

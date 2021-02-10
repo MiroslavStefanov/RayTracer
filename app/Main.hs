@@ -64,14 +64,14 @@ scene3 = scene
     topPlane = Plane (0, 0, 45) (0, 0, -1)
     leftPlane = Plane (-20, 0, 0) (1, 0, 0)
     rightPlane = Plane (20, 0, 0) (-1, 0, 0)
-    torus = Torus (5, 60, 6) 3 14
+    torus = Torus (5, 25, 6) 3 2
     --triangle = Triangle (-15, 40, 0) (15, 60, 0) (0, 33, 27)
     bottomPlaneTexture = PhongTexture (CheckerSampler white (Rgb 0 0 0) 3.0) 0 8
     topPlaneTexture = PhongTexture (ConstantColorSampler (Rgb 0 1 0)) 0 8
     leftPlaneTexture = PhongTexture (ConstantColorSampler (Rgb 1 0 0)) 0 8
     rightPlaneTexture = PhongTexture (ConstantColorSampler (Rgb 0 0 1)) 0 8
     torusTexture = ColorTexture $ ConstantColorSampler (Rgb 1 1 0)
-    --torusTexture = PhongTexture (ConstantColorSampler (Rgb 1 0 1)) 0 8
+    --torusTexture = PhongTexture (ConstantColorSampler (Rgb 0 1 1)) 0 8
     --triangleTexture = FrenselTexture 1.33
     meshBottomPlane = Mesh bottomPlane bottomPlaneTexture
     meshTopPlane = Mesh topPlane topPlaneTexture
@@ -79,7 +79,7 @@ scene3 = scene
     meshRightPlane = Mesh rightPlane rightPlaneTexture
     meshTorus = Mesh torus torusTexture
     --meshTriangle = makeMesh triangle triangleTexture
-    light = LS.PointLight 650 (Rgb 1 1 1) (10, 20, 30)
+    light = LS.PointLight 900 (Rgb 1 1 1) (10, 20, 30)
     scene = Scene [meshBottomPlane, meshTopPlane, meshLeftPlane, meshRightPlane, meshTorus] [light]    
 
 scene4 :: Scene
@@ -111,7 +111,17 @@ scene4 = scene
     meshCone = Mesh cone coneTexture
     light = LS.PointLight 650 (Rgb 1 1 1) (10, 20, 30)
     light2 = LS.PointLight 650 (Rgb 1 0 1) (5, 20, 30)
-    scene = Scene [meshBottomPlane, meshTopPlane, meshLeftPlane, meshRightPlane, meshCone] [light]    
+    scene = Scene [meshBottomPlane, meshTopPlane, meshLeftPlane, meshRightPlane, meshCone] [light]
+
+scene6 :: Scene
+scene6 = scene
+  where
+    torus = Torus (5, 25, 6) 6 4
+    torusTexture = ColorTexture $ ConstantColorSampler (Rgb 1 1 0)
+    --torusTexture = PhongTexture (ConstantColorSampler (Rgb 0 1 1)) 0 8
+    meshTorus = Mesh torus torusTexture
+    light = LS.PointLight 100 (Rgb 1 1 1) (10, 20, 30)
+    scene = Scene [meshTorus] [light]     
 
 perspective :: Int -> Int -> Perspective
 perspective = createPerspective (0, 0, 10) (0, 1, 10) (0, 0, 1) (pi/2.5)
@@ -122,4 +132,4 @@ main = do
   imageWidth <- (readLn :: IO Int)
   putStrLn "Enter image height"
   imageHeight <- (readLn :: IO Int)
-  renderScene scene2 (perspective imageWidth imageHeight) 3
+  renderScene scene3 (perspective imageWidth imageHeight) 3
