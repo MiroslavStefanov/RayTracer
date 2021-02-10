@@ -2,6 +2,7 @@ module Rendering where
 
 import qualified SDL
 import qualified SDL.Video.Renderer as Renderer
+import qualified SDL.Event as Event
 import Data.Text
 import Shading.FrameBuffer
 import Shading.Color
@@ -34,4 +35,10 @@ renderFrameBuffer renderer fBuffer = do
   texutre <- SDL.createTextureFromSurface renderer surface
   SDL.copy renderer texutre Nothing Nothing
   SDL.present renderer
-  renderFrameBuffer renderer fBuffer
+
+isKeyPress :: SDL.Keycode -> SDL.Event -> Bool
+isKeyPress keyCode event =
+  case SDL.eventPayload event of
+    SDL.KeyboardEvent eventData -> SDL.keyboardEventKeyMotion eventData == SDL.Pressed &&
+      SDL.keysymKeycode (SDL.keyboardEventKeysym eventData) == keyCode
+    _ -> False

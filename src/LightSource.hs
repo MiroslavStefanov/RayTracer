@@ -13,4 +13,4 @@ data LightSource =
         intensity :: Float,
         color :: Rgb,
         position :: Vector
-    }
+    } deriving (Show, Read, Eq)

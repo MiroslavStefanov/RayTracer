@@ -70,7 +70,7 @@ scene3 = scene
     topPlaneTexture = PhongTexture (ConstantColorSampler (Rgb 0 1 0)) 0 8
     leftPlaneTexture = PhongTexture (ConstantColorSampler (Rgb 1 0 0)) 0 8
     rightPlaneTexture = PhongTexture (ConstantColorSampler (Rgb 0 0 1)) 0 8
-    torusTexture = ColorTexture (Rgb 1 1 0)
+    torusTexture = ColorTexture $ ConstantColorSampler (Rgb 1 1 0)
     --torusTexture = PhongTexture (ConstantColorSampler (Rgb 1 0 1)) 0 8
     --triangleTexture = FrenselTexture 1.33
     meshBottomPlane = Mesh bottomPlane bottomPlaneTexture
@@ -113,11 +113,13 @@ scene4 = scene
     light2 = LS.PointLight 650 (Rgb 1 0 1) (5, 20, 30)
     scene = Scene [meshBottomPlane, meshTopPlane, meshLeftPlane, meshRightPlane, meshCone] [light]    
 
-perspective :: Perspective
-perspective = createPerspective (0, 0, 10) (0, 1, 10) (0, 0, 1) (pi/2.5) 400 400
+perspective :: Int -> Int -> Perspective
+perspective = createPerspective (0, 0, 10) (0, 1, 10) (0, 0, 1) (pi/2.5)
 
 main :: IO ()
 main = do
-  renderScene scene4 perspective 5
-  -- exportImage scene1 perspective 3 "traceOutput.png"
-  -- exportImage scene2 perspective 5 "traceOutput2.png"
+  putStrLn "Enter image width"
+  imageWidth <- (readLn :: IO Int)
+  putStrLn "Enter image height"
+  imageHeight <- (readLn :: IO Int)
+  renderScene scene2 (perspective imageWidth imageHeight) 3

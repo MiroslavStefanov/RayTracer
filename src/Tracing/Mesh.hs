@@ -6,4 +6,4 @@ import Shading.Texture
 data Mesh = Mesh {
   geometry :: Geometry,
   texture :: Texture
-}
+} deriving (Show, Read, Eq)

@@ -1,11 +1,13 @@
 module Lib
     ( exportImage
     , renderScene
+    , debugRenderScene
     ) where
 
 import Base
 import Tracing.Scene
 import Tracing.Tracer
+import qualified Tracing.SceneEditor as Editor
 import PinholeCamera
 import Shading.FrameBuffer
 import Shading.Color
@@ -14,6 +16,7 @@ import Shading.ShadingTracers
 import Shading.Texture
 import Tracing.Mesh
 import Rendering
+import qualified SDL
 import qualified LightSource as LS
 
 import ErrorHandling.ErrorMessages
@@ -25,28 +28,26 @@ import Geometry
 
 import Data.Foldable (foldlM)
 import Data.Time.Clock
+import Control.Monad (unless)
+import Data.Maybe ( fromMaybe )
 
-shadeFrameBufferTracer :: Scene -> FrameBuffer ShadingDensity -> Int -> Tracer (FrameBuffer ShadingDensity)
-shadeFrameBufferTracer scene buffer remainingSteps
-  | remainingSteps <= 0 = identityTracer buffer
-  | otherwise = do
+shadingStepTracer :: Scene -> FrameBuffer ShadingDensity -> Tracer (FrameBuffer ShadingDensity)
+shadingStepTracer scene buffer = do
     generateIntersectionsTracer scene
     hasAnyIntersections <- anyIntersectionsTracer
     if hasAnyIntersections
       then do
         shadedBuffer <- transformBufferTracer (shadeTracer scene) buffer
-        requestedRaysBuffer <- transformBufferTracer (shootRaysFromIntersectionTracer scene) shadedBuffer
-        shadeFrameBufferTracer scene requestedRaysBuffer $ remainingSteps - 1
+        transformBufferTracer (shootRaysFromIntersectionTracer scene) shadedBuffer
       else
         return buffer
 
-getColorTracer :: ShadingDensity -> Tracer Rgb
-getColorTracer [] = abortTracer missingPixelValueErrorMessage
-getColorTracer density = foldlM addWeightedColorTracer (Rgb 0 0 0) density where
-  addWeightedColorTracer = \totalColor (value, weight) -> do
-    case value of
-      Left color -> return $ clamp (totalColor `add` scale weight color)
-      Right _ -> abortTracer recursionDepthNotEnoughErrorMessage
+shadeFrameBufferTracer :: Scene -> FrameBuffer ShadingDensity -> Int -> Tracer (FrameBuffer ShadingDensity)
+shadeFrameBufferTracer scene buffer remainingSteps
+  | remainingSteps <= 0 = identityTracer buffer
+  | otherwise = do
+    nextBuffer <- shadingStepTracer scene buffer
+    shadeFrameBufferTracer scene nextBuffer (remainingSteps - 1)
 
 renderSceneTracer :: Int -> Int -> PinholeCamera -> Scene -> Int -> Tracer (FrameBuffer Rgb)
 renderSceneTracer bufferWidth bufferHeight camera scene maxRecursionDepth = 
@@ -54,7 +55,7 @@ renderSceneTracer bufferWidth bufferHeight camera scene maxRecursionDepth =
   in do
   initialBuffer <- transformBufferTracer (shootCameraRayTracer camera) indexedBuffer
   shadedBuffer <- shadeFrameBufferTracer scene initialBuffer maxRecursionDepth
-  transformBufferTracer getColorTracer shadedBuffer
+  transformBufferTracer (identityTracer . getShadingColor) shadedBuffer
 
 
 traceScene :: Int -> Int -> PinholeCamera -> Scene -> Int -> Either TraceError (FrameBuffer Rgb)
@@ -63,6 +64,21 @@ traceScene bufferWidth bufferHeight camera scene recursionDepth =
   in case tracingResult of 
     Left error -> Left error
     Right (_, buffer) -> Right buffer
+
+preformTracingPass :: SDL.Renderer -> Scene -> FrameBuffer ShadingDensity -> TracingPass -> IO (TracingPass, FrameBuffer ShadingDensity)
+preformTracingPass renderer scene buffer pass = let
+  stepTracer = do
+    nextBuffer <- shadingStepTracer scene buffer
+    colorizedBuffer <- transformBufferTracer (identityTracer . getShadingColor) nextBuffer
+    return (nextBuffer, colorizedBuffer)
+  result = trace stepTracer pass
+  in case result of
+      Left (GeneralError msg) -> do
+        putStrLn $ "Error: " ++ msg
+        return (emptyTracingPass, createEmptyBuffer)
+      Right (nextPass, (densityBuffer, colorBuffer)) -> do
+        renderFrameBuffer renderer colorBuffer
+        return (nextPass, densityBuffer)
 
 exportImage :: Scene -> Perspective -> Int -> String -> IO ()
 exportImage scene (Perspective camera width height) recDepth outputName = do
@@ -77,8 +93,38 @@ exportImage scene (Perspective camera width height) recDepth outputName = do
     where      
       image = traceScene width height camera scene recDepth
 
+renderLoop :: SDL.Renderer -> FrameBuffer Rgb -> IO Bool
+renderLoop renderer image = do
+  events <- SDL.pollEvents
+  if any (isKeyPress SDL.KeycodeQ) events
+  then return True
+  else if any (isKeyPress SDL.KeycodeE) events
+  then return False
+  else do
+    renderFrameBuffer renderer image
+    renderLoop renderer image
+
+editScene :: Scene -> IO (Scene, Maybe Int)
+editScene scene = do
+  putStrLn "To save changes enter 0"
+  putStrLn "To discard changes changes enter -1"
+  putStrLn "To add mesh enter 1"
+  putStrLn "To add light enter 2"
+  command <- (readLn :: IO Int)
+  case command of
+    -1 -> return (scene, Nothing)
+    0 -> do
+      putStrLn "Enter recursion depth for new scene tracing"
+      depth <- (readLn :: IO Int)
+      return (scene, Just depth)
+    1 -> Editor.addMesh scene >>= editScene
+    2 -> Editor.addLight scene >>= editScene
+    _ -> do
+      putStrLn $ "Unknow command " ++ show command
+      editScene scene
+
 renderScene :: Scene -> Perspective -> Int -> IO()
-renderScene scene (Perspective camera width height) recDepth = do
+renderScene scene perspective@(Perspective camera width height) recDepth = do
   startTime <- getCurrentTime
   case image of
     Right img -> do
@@ -86,7 +132,45 @@ renderScene scene (Perspective camera width height) recDepth = do
       endTime <- getCurrentTime
       print $ nominalDiffTimeToSeconds (endTime `diffUTCTime` startTime)
       (window, renderer) <- openWindow width height
-      renderFrameBuffer renderer img
+      shouldQuit <- renderLoop renderer img
+      if shouldQuit
+      then return ()
+      else do
+        (newScene, newRecursionDepth) <- editScene scene
+        renderScene newScene perspective $ fromMaybe recDepth newRecursionDepth
     Left (GeneralError msg) -> putStrLn $ "Error: " ++ msg
     where      
       image = traceScene width height camera scene recDepth
+
+debugRenderLoop :: SDL.Renderer -> Scene -> FrameBuffer ShadingDensity -> TracingPass -> IO()
+debugRenderLoop renderer scene buffer@(FrameBuffer w h densities) pass = do
+  events <- SDL.pollEvents
+  if any (isKeyPress SDL.KeycodeT) events
+    then do
+      putStrLn "Starting next tracing pass:"
+      putStrLn $ show (length (outputRays pass)) ++ "rays"
+      startTime <- getCurrentTime
+      (nextPass, nextBuffer) <- preformTracingPass renderer scene buffer pass
+      endTime <- getCurrentTime
+      putStr "[Tracing]Seconds elapsed: "
+      print $ nominalDiffTimeToSeconds (endTime `diffUTCTime` startTime)
+      debugRenderLoop renderer scene nextBuffer nextPass
+    else if any (isKeyPress SDL.KeycodeQ) events
+      then return ()
+      else
+        let colorBuffer = FrameBuffer w h $ map getShadingColor densities
+        in do
+          renderFrameBuffer renderer colorBuffer
+          debugRenderLoop renderer scene buffer pass   
+
+debugRenderScene :: Scene -> Perspective -> IO ()
+debugRenderScene scene (Perspective camera width height) = 
+  let 
+    indexedBuffer = createBuffer width height
+    initializeTracer = transformBufferTracer (shootCameraRayTracer camera) indexedBuffer
+    Right (initialPass, initialBuffer) = trace initializeTracer emptyTracingPass
+    in do
+      (window, renderer) <- openWindow width height
+      (initialPass, initialBuffer) <- preformTracingPass renderer scene initialBuffer initialPass
+      debugRenderLoop renderer scene initialBuffer initialPass
+      
