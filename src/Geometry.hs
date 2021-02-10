@@ -165,31 +165,39 @@ intersect ray@(start, direction)
 
 intersect ray@(origStart, origDirection)
           cone@(Cone position radius height)
-  |abs delta < cEps || delta < 0 = Nothing
-  |r <= Vec.yy position || r >= Vec.yy position + height = Nothing
+  |null solution = Nothing
+  |t1 <= 0 = Nothing
+  |r < Vec.zz position || r > Vec.zz position + height = Nothing
   |otherwise = Just (Intersection hitPoint
                                   localNormal
                                   (InvalidTexture "blank")
-                                  t
+                                  tShapeHit
                                   newCoords)
     where
       localRay@(start, direction) = (Vec.subtract origStart position, origDirection)
-      a = Vec.xx start - Vec.xx position
-      b = Vec.zz start - Vec.zz position
-      d = height - Vec.yy start + Vec.yy position
-      tang = (radius / height)^2
-      aa = Vec.xx direction ^ 2 + Vec.zz direction ^ 2 - tang * (Vec.yy direction^2)
-      bb = 2 * a * Vec.xx direction + 2 * b * Vec.zz direction + 2 * tang * d * Vec.yy direction
-      cc = a^2 + b^2 - tang * d^2
-      delta = bb^2 - 4 * aa * cc
-      t1 = (-b) - sqrt delta / (2 * a)
-      t2 = (-b) + sqrt delta / (2 * a)
-      t = min t1 t2
-      r = Vec.yy start + t * Vec.yy direction
-      localHitPoint = scaleTo t localRay
+      ox = Vec.xx start
+      oy = Vec.yy start
+      oz = Vec.zz start
+      dx = Vec.xx direction
+      dy = Vec.yy direction
+      dz = Vec.zz direction
+      k = (radius / height)^2
+      aa = dx^2 + dy^2 - k * dz^2
+      bb = 2 * (dx * ox + dy * oy - k * dz * (oz - height))
+      cc = ox^2 + oy^2 - k * (oz - height)^2
+      solution = solve2 (cc, bb, aa)
+      t0 = minimum solution
+      t1 = maximum solution
+      tShapeHit = if t0 <= 0 then t1 else t0
+      localHitPoint = scaleTo tShapeHit localRay
       localNormal = computeNormalAtPoint cone localHitPoint
-      hitPoint = scaleTo t ray
-      newCoords = (0, 0)
+      hitPoint = scaleTo tShapeHit ray
+      r = Vec.zz hitPoint
+      atanHit = atan2 (Vec.yy hitPoint) (Vec.xx hitPoint)
+      phi = if atanHit < 0 then atanHit + 2 * pi else atanHit
+      u = phi
+      v = r / height
+      newCoords = (u, v)
 
 intersect ray@(origStart, origDirection)
           torus@(Torus position sRadius tRadius)
@@ -235,9 +243,9 @@ computeNormalAtPoint (Torus position sRadius tRadius) (xx, yy, zz) = Vec.normali
 computeNormalAtPoint (Cone position radius height) (xx, yy, zz) = Vec.normalize (newX, newY, newZ)
   where
     newX = xx - Vec.xx position
-    newZ = zz - Vec.zz position
-    r = sqrt $ newX^2 + newZ^2
-    newY = r * (radius / height)
+    newY = yy - Vec.yy position
+    r = sqrt $ newX^2 + newY^2
+    newZ = if r == 0 then radius / height else r * (radius / height)
 computeNormalAtPoint (Parallelepiped position aa bb cc (aLen, bLen, cLen)) point
   |s1Dot0 = Vec.normalize $ s1 `Vec.subtract` position
   |s2Dot0 = Vec.normalize $ s2 `Vec.subtract` position

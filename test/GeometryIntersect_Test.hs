@@ -18,6 +18,9 @@ testTriangle = Triangle (0, -5, 15) (-5, 5, 15) (5, 5, 15)
 testParallelepiped :: Geometry
 testParallelepiped = Parallelepiped (0, 0, 15) (1, 0, 0) (0, 1, 0) (0, 0, 1) (5, 5, 5)
 
+testCone :: Geometry
+testCone = Cone (0, 0, 20) 5 15
+
 testRay1 :: Ray
 testRay1 = ((0, 0, 0), (0, 0, 1))
 
@@ -32,6 +35,9 @@ testRay4 = ((0, 4, 0), (0, 0, 1))
 
 testRay5 :: Ray
 testRay5 = ((5, 5, 0), (0, 0, 1))
+
+testRay6 :: Ray
+testRay6 = ((-6, 0, 22), (1, 0, 0))
 
 testIntersectPlaneWithRay :: IO()
 testIntersectPlaneWithRay = hspec $ do
@@ -104,3 +110,21 @@ testIntersectParallelepipedWithRay = hspec $ do
                                                                           (0, 0))
     it "Should return Nothing" $ do
       intersect testRay3 testParallelepiped `shouldBe` Nothing
+
+testIntersectConeWithRay :: IO()
+testIntersectConeWithRay = hspec $ do
+  describe "Intersect testCone with testRays" $ do
+    it "Should return intersection at (0, 0, 35)" $ do
+      intersect testRay1 testCone `shouldBe` Just (Intersection (0, 0, 35)
+                                                                (0, 0, 1)
+                                                                (InvalidTexture "blank")
+                                                                35
+                                                                (0, 2.3333333))
+    it "Should return intersection at (-4.3333335, 0, 22)" $ do
+      intersect testRay6 testCone `shouldBe` Just (Intersection (-4.3333335, 0, 22)
+                                                                (-0.94868326, 0, 0.31622776)
+                                                                (InvalidTexture "blank")
+                                                                1.6666665
+                                                                (3.1415927,1.4666667))
+    it "Should return Nothing" $ do
+      intersect testRay3 testCone `shouldBe` Nothing      
