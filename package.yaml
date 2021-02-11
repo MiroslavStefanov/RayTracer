@@ -29,6 +29,7 @@ dependencies:
 - time
 - text
 - vector
+- monad-loops
 
 library:
   source-dirs: src

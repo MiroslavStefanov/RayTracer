@@ -4,7 +4,7 @@ import Shading.Color
 import Shading.Sampler
 
 data Material =
-  PhongMaterial Float Float |
+  PhongMaterial |
   ReflectiveMaterial Float |
   FresnelMaterial Float Float |
   NoMaterial
@@ -13,10 +13,12 @@ data Material =
 data Texture = Texture {
   diffuseSampler :: Sampler Rgb,
   alphaSampler :: Sampler Float,
+  specularMultiplier :: Float,
+  specularExponent :: Float,
   material :: Material
 }
 
 emptyTexture :: Texture
-emptyTexture = Texture emptyDiffuse emptyAlpha NoMaterial where
+emptyTexture = Texture emptyDiffuse emptyAlpha 0 0 NoMaterial where
   emptyDiffuse = Sampler undefined 
   emptyAlpha = Sampler undefined

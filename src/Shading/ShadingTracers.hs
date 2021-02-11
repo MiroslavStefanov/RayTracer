@@ -19,27 +19,38 @@ shootRaysFromIntersectionTracer scene = foldlM tracer [] where
   tracer = \totalDensity d@(value, weight) -> do 
     case value of
       Left _ -> return $ d : totalDensity
-      Right (SContext.ShadingContext (rayOrigin, rayDirection) intersection) -> let 
+      Right (SContext.ShadingContext ray@(rayOrigin, rayDirection) intersection) -> let 
         t = texture intersection 
         diffuse = diffuseSampler t
         reflectedDirection = Vector.reflect rayDirection $ normal intersection
         reflectedRay = (getPositiveBiasedIntersectionPosition intersection, reflectedDirection)
-        in case material t of
-            PhongMaterial _ _ -> mapM_ (`visibility` intersection) (lightSources scene) >> identityTracer (d : totalDensity)
+        emptyIntersection = addTexture intersection emptyTexture
+        reflectedContext = SContext.ShadingContext reflectedRay emptyIntersection
+        diffuseContext = SContext.ShadingContext ray (addTexture intersection $ Texture diffuse (alphaSampler t) (specularMultiplier  t) (specularExponent t) PhongMaterial)
+        in do
+          mapM_ (`visibility` intersection) (lightSources scene)
+          case material t of
+            PhongMaterial ->  return (d : totalDensity)
+            ReflectiveMaterial strength -> do
+              shootRayTracer reflectedRay
+              return $ (Right diffuseContext, (1 - strength) * weight) : (Right reflectedContext, strength * weight) : totalDensity 
             FresnelMaterial eta strength -> let
-              newIntersection = addTexture intersection emptyTexture
-              ownColorDensity = (Left (sample diffuse (coordinates intersection)), (1 - strength) * weight) : totalDensity
+              --ownColorDensity = (Left (sample diffuse (coordinates intersection)), (1 - strength) * weight) : totalDensity
               reflectionRatio = min 1.0 (Vector.rSchlick2 (normal intersection) rayDirection 1 eta)
+              reflectedDensity = (Right reflectedContext, reflectionRatio * strength * weight)
               maybeTransmittedDirection = Vector.refract (normal intersection) rayDirection 1 eta
-              reflectedDensity = (Right (SContext.ShadingContext reflectedRay newIntersection), reflectionRatio * strength * weight)
               in do
                 shootRayTracer reflectedRay
                 case maybeTransmittedDirection of
                   Just direction -> let 
                     transmittedRay = (getNegativeBiasedIntersectionPostion intersection, direction)
-                    transmittedDensity = (Right (SContext.ShadingContext transmittedRay newIntersection), (1 - reflectionRatio) * strength * weight)
-                    in shootRayTracer transmittedRay >> identityTracer (reflectedDensity : (transmittedDensity : ownColorDensity))
-                  Nothing -> return (reflectedDensity : ownColorDensity)
+                    transmittedDensity = (Right (SContext.ShadingContext transmittedRay emptyIntersection), (1 - reflectionRatio) * strength * weight)
+                    in 
+                      shootRayTracer transmittedRay >> identityTracer 
+                      ((Right diffuseContext, (1 - strength) * weight) :
+                      (reflectedDensity : 
+                      (transmittedDensity : totalDensity)))
+                  Nothing -> return (reflectedDensity : totalDensity)
               
 
 
@@ -52,11 +63,10 @@ shadeTracer scene = mapM tracer where
       Right context@(SContext.ShadingContext incidentRay previousIntersection) -> let
         t = texture previousIntersection
         in case material t of
-          PhongMaterial specularMultiplier specularExponent -> do
+          PhongMaterial -> do
             shadowMultipliers <- mapM occlusion (lightSources scene)
             let 
-              colorizer = \s -> lighting s context specularMultiplier specularExponent
-              colorSums = map colorizer $ lightSources scene
+              colorSums = map (`lighting` context) $ lightSources scene
               shadedColors = zipWith Shading.Color.scale shadowMultipliers colorSums
               accumulatedLightContributions = foldl (Shading.Color.add . Shading.Color.clamp) (Rgb 0 0 0) shadedColors
               in

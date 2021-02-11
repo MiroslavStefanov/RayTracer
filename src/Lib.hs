@@ -27,7 +27,6 @@ import Geometry
 
 import Data.Foldable (foldlM)
 import Data.Time.Clock
-import Control.Monad (unless)
 import Data.Maybe ( fromMaybe )
 
 shadingStepTracer :: Scene -> FrameBuffer ShadingDensity -> Tracer (FrameBuffer ShadingDensity)
@@ -120,7 +119,7 @@ renderScene scene perspective@(Perspective camera width height) recDepth = do
     where      
       image = traceScene width height camera scene recDepth
 
-debugRenderLoop :: SDL.Renderer -> Scene -> FrameBuffer ShadingDensity -> TracingPass -> IO()
+debugRenderLoop :: SDL.Renderer -> Scene -> FrameBuffer ShadingDensity -> TracingPass -> IO Int
 debugRenderLoop renderer scene buffer@(FrameBuffer w h densities) pass = do
   events <- SDL.pollEvents
   if any (isKeyPress SDL.KeycodeT) events
@@ -134,14 +133,18 @@ debugRenderLoop renderer scene buffer@(FrameBuffer w h densities) pass = do
       print $ nominalDiffTimeToSeconds (endTime `diffUTCTime` startTime)
       debugRenderLoop renderer scene nextBuffer nextPass
     else if any (isKeyPress SDL.KeycodeQ) events
-      then return ()
-      else
+      then return 0
+    else if any (isKeyPress SDL.KeycodeLeft) events
+      then return (-1)
+    else if any (isKeyPress SDL.KeycodeRight) events
+      then return 1
+    else
         let colorBuffer = FrameBuffer w h $ map getShadingColor densities
         in do
           renderFrameBuffer renderer colorBuffer
           debugRenderLoop renderer scene buffer pass   
 
-debugRenderScene :: Scene -> Perspective -> IO ()
+debugRenderScene :: Scene -> Perspective -> IO Int
 debugRenderScene scene (Perspective camera width height) = 
   let 
     indexedBuffer = createBuffer width height

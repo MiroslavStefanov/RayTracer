@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 00b3e96a36268daf5ff17be141ddd034c08e178dff1e6ee1cdd914f08deb542b
+-- hash: b62eb818b4a66dce1fea49e2489f226680a13d910a8f2b3abbef2316a8094d97
 
 name:           RayTracer
 version:        0.1.0.0
@@ -58,6 +58,7 @@ library
     , base >=4.7 && <5
     , hspec
     , linear
+    , monad-loops
     , numeric-limits
     , sdl2
     , text
@@ -78,6 +79,7 @@ executable RayTracer-exe
     , base >=4.7 && <5
     , hspec
     , linear
+    , monad-loops
     , numeric-limits
     , sdl2
     , text
@@ -101,6 +103,7 @@ test-suite RayTracer-test
     , base >=4.7 && <5
     , hspec
     , linear
+    , monad-loops
     , numeric-limits
     , sdl2
     , text
