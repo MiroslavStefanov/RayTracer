@@ -4,6 +4,7 @@ import Shading.FrameBuffer_Test ( testFrameBufferModule )
 import Shading.Sampler_Test ( testSamplerModule )
 import GeometryIntersect_Test ( testGeometryModule )
 import LightSource_Test ( testLightSourceModule )
+import PinholeCamera_Test ( testPinholeCameraModule )
 
 import Test.Hspec
 
@@ -15,4 +16,4 @@ main = hspec $ do
     it "" testGeometryModule
     it "" testFrameBufferModule
     it "" testSamplerModule
-    it "" testLightSourceModule
+    it "" testPinholeCameraModule
