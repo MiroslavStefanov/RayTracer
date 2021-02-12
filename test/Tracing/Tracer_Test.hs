@@ -1,80 +1,79 @@
--- {-# LANGUAGE TupleSections #-}
--- {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE LambdaCase #-}
 module Tracing.Tracer_Test where
 
--- import Base
--- import ErrorHandling.ErrorMessages
--- import Tracing.Tracer
--- import Tracing.TracingPass
--- import Tracing.Scene
--- import Tracing.Mesh
--- import Ray
--- import Intersection
--- import PinholeCamera
--- import Geometry
--- import qualified Vector as Vec
--- import Shading.Texture
--- import Shading.FrameBuffer
--- import Shading.Color
--- import Shading.ShadingContext
--- import Shading.Sampler
--- import qualified LightSource as LS
+import Base
+import ErrorHandling.ErrorMessages
+import Tracing.Tracer
+import Tracing.TracingPass
+import Tracing.Scene
+import Tracing.Mesh
+import Ray
+import Intersection
+import PinholeCamera
+import Geometry
+import qualified Vector as Vec
+import Shading.Texture
+import Shading.FrameBuffer
+import Shading.Color
+import Shading.ShadingContext
+import Shading.Sampler
+import qualified LightSource as LS
 
--- import Test.Hspec
--- import Linear.Epsilon
+import Test.Hspec
+import Linear.Epsilon
 
--- testIdentityTracer :: IO()
--- testIdentityTracer = hspec $ do
---   describe "IdentityTracer with empty tracing pass" $ do
---     it "Should return tracing result of 1" $ do
---       trace (identityTracer 1) emptyTracingPass `shouldBe` Right (emptyTracingPass, 1)
+testIdentityTracer :: IO()
+testIdentityTracer = hspec $ do
+  describe "IdentityTracer with empty tracing pass" $ do
+    it "Should return tracing result of 1" $ do
+      trace (identityTracer 1) emptyTracingPass `shouldBe` Right (emptyTracingPass, 1)
             
--- testAbortTracer :: IO()
--- testAbortTracer = hspec $ do
---   describe "AbortTacer" $ do
---     it "Should return error" $ do
---       trace testTracer emptyTracingPass `shouldBe` Left (GeneralError errorMessage)
---       where 
---         errorMessage = "Test error message"
---         testTracer = abortTracer errorMessage :: Tracer ()
+testAbortTracer :: IO()
+testAbortTracer = hspec $ do
+  describe "AbortTacer" $ do
+    it "Should return error" $ do
+      trace testTracer emptyTracingPass `shouldBe` Left (GeneralError errorMessage)
+      where 
+        errorMessage = "Test error message"
+        testTracer = abortTracer errorMessage :: Tracer ()
 
--- testShootRayTracer :: IO()
--- testShootRayTracer = hspec $ do
---   describe "ShootRayTracer should add ray to a tracing pass" $ do 
---     let 
---       shootedRay = ((0,0,0), (1,0,0)) 
---       expectedPass = TracingPass [] [shootedRay]
---       in
---         it "Shoot ray in an empty pass" $ do
---           trace (shootRayTracer shootedRay) emptyTracingPass `shouldBe` Right (expectedPass, ())
+testShootRayTracer :: IO()
+testShootRayTracer = hspec $ do
+  describe "ShootRayTracer should add ray to a tracing pass" $ do 
+    let 
+      shootedRay = ((0,0,0), (1,0,0)) 
+      expectedPass = TracingPass [] [shootedRay]
+      in
+        it "Shoot ray in an empty pass" $ do
+          trace (shootRayTracer shootedRay) emptyTracingPass `shouldBe` Right (expectedPass, ())
     
--- testGetIntersectionTracer :: IO()
--- testGetIntersectionTracer = hspec $ do
---   describe "GetIntersectionTracer should consume one intersection from a non-empty tracing pass" $ do
---     it "Should get intersection" $ do
---       let
---         intersection = Intersection (0,0,0) (1,0,0) (InvalidTexture "No texture") 0 (0,0)
---         initialPass = TracingPass [Just intersection] []
---         expectedPass = emptyTracingPass
---         in
---           trace getIntersectionTracer initialPass `shouldBe` Right (expectedPass, Just intersection)
---     it "Should get nothing" $ do
---       let
---         initialPass = TracingPass [Nothing] []
---         expectedPass = emptyTracingPass
---         in
---           trace getIntersectionTracer initialPass `shouldBe` Right (expectedPass, Nothing)
---     it "Should return error due to empty pass" $ do
---       trace getIntersectionTracer emptyTracingPass `shouldBe` Left (GeneralError noIntersectionsErrorMessage)
+testGetIntersectionTracer :: IO()
+testGetIntersectionTracer = hspec $ do
+  describe "GetIntersectionTracer should consume one intersection from a non-empty tracing pass" $ do
+    it "Should get intersection" $ do
+      let
+        initialPass = TracingPass [Just emptyIntersection] []
+        expectedPass = emptyTracingPass
+        in
+          trace getIntersectionTracer initialPass `shouldBe` Right (expectedPass, Just emptyIntersection)
+    it "Should get nothing" $ do
+      let
+        initialPass = TracingPass [Nothing] []
+        expectedPass = emptyTracingPass
+        in
+          trace getIntersectionTracer initialPass `shouldBe` Right (expectedPass, Nothing)
+    it "Should return error due to empty pass" $ do
+      trace getIntersectionTracer emptyTracingPass `shouldBe` Left (GeneralError noIntersectionsErrorMessage)
 
--- testAnyIntersectionsTracer :: IO()
--- testAnyIntersectionsTracer = hspec $ do
---   describe "AnyIntersectionsTracer should return whether there are any intersections without modifying the pass" $ do
---     it "Should return false for empty pass" $ do
---       trace anyIntersectionsTracer emptyTracingPass `shouldBe` Right (emptyTracingPass, False)
---     it "Should return true for non-empty pass" $ do
---       trace anyIntersectionsTracer pass `shouldBe` Right (pass, True) where
---         pass = TracingPass [Nothing] []
+testAnyIntersectionsTracer :: IO()
+testAnyIntersectionsTracer = hspec $ do
+  describe "AnyIntersectionsTracer should return whether there are any intersections without modifying the pass" $ do
+    it "Should return false for empty pass" $ do
+      trace anyIntersectionsTracer emptyTracingPass `shouldBe` Right (emptyTracingPass, False)
+    it "Should return true for non-empty pass" $ do
+      trace anyIntersectionsTracer pass `shouldBe` Right (pass, True) where
+        pass = TracingPass [Nothing] []
 
 -- testIndexTexelsTracer :: IO()
 -- testIndexTexelsTracer = hspec $ do

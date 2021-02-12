@@ -10,7 +10,7 @@ data Intersection = Intersection {
   texture :: Texture,
   distance :: Float,
   coordinates :: Texel
-}
+} deriving (Show, Eq)
 
 emptyIntersection :: Intersection
 emptyIntersection = Intersection (0,0,0) (0,0,0) emptyTexture 0 (0, 0) 
