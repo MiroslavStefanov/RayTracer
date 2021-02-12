@@ -1,7 +1,8 @@
-import Tracing.Tracer_Test
-import Shading.Color_Test
-import Shading.FrameBuffer_Test
-import GeometryIntersect_Test
+import Tracing.Tracer_Test ( testTracerModule )
+import Shading.Color_Test ( testColorModule )
+import Shading.FrameBuffer_Test ( testFrameBufferModule )
+import Shading.Sampler_Test ( testSamplerModule )
+import GeometryIntersect_Test ( testGeometryModule )
 
 import Test.Hspec
 
@@ -11,5 +12,5 @@ main = hspec $ do
     it "" testTracerModule 
     it "" testColorModule 
     it "" testGeometryModule
-    it "" testGeometryModule
     it "" testFrameBufferModule
+    it "" testSamplerModule
