@@ -63,7 +63,7 @@ shadeTracer scene = mapM tracer where
         t = texture previousIntersection
         in case material t of
           PhongMaterial -> do
-            shadowMultipliers <- mapM occlusion (lightSources scene)
+            shadowMultipliers <- mapM (`occlusion` position previousIntersection) (lightSources scene)
             let 
               colorSums = map (`lighting` context) $ lightSources scene
               shadedColors = zipWith Shading.Color.scale shadowMultipliers colorSums

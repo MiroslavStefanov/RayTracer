@@ -1,27 +1,12 @@
-{-# LANGUAGE TupleSections #-}
-{-# LANGUAGE LambdaCase #-}
 module Tracing.Tracer_Test where
 
 import Base
 import ErrorHandling.ErrorMessages
 import Tracing.Tracer
 import Tracing.TracingPass
-import Tracing.Scene
-import Tracing.Mesh
-import Ray
 import Intersection
-import PinholeCamera
-import Geometry
-import qualified Vector as Vec
-import Shading.Texture
-import Shading.FrameBuffer
-import Shading.Color
-import Shading.ShadingContext
-import Shading.Sampler
-import qualified LightSource as LS
 
 import Test.Hspec
-import Linear.Epsilon
 
 testIdentityTracer :: IO()
 testIdentityTracer = hspec $ do
@@ -83,21 +68,6 @@ testTracerModule = hspec $ do
     it "" testShootRayTracer
     it "" testGetIntersectionTracer
     it "" testAnyIntersectionsTracer
-
--- testIndexTexelsTracer :: IO()
--- testIndexTexelsTracer = hspec $ do
---   describe "IndexTexelsTracer should produce FrameBuffer that contains texel coordinates of each texel" $ do 
---     let 
---       bufferWidth = 3
---       bufferHeight = 3
---       expectedBuffer = FrameBuffer bufferWidth bufferHeight [
---         (0, 0),   (0.5, 0),   (1, 0),
---         (0, 0.5), (0.5, 0.5), (1, 0.5),
---         (0, 1),   (0.5, 1),   (1, 1)
---         ]
---       in
---         it "Create indexed 3x3 buffer" $ do
---           trace (indexTexelsTracer bufferWidth bufferHeight) emptyTracingPass `shouldBe` Right (emptyTracingPass, expectedBuffer)
 
 -- testShootCameraRayTracer :: IO()
 -- testShootCameraRayTracer = hspec $ do
@@ -198,13 +168,6 @@ testTracerModule = hspec $ do
 --           truncatedResult = (\case (pass, Left col) -> (pass, Left $ truncateColor col)) <$> actualResult
 --           in
 --             truncatedResult `shouldBe` (Right (emptyTracingPass, Left expectedColor) :: TraceResult ShadingValue)
-
--- testTransformBufferTracer :: IO()
--- testTransformBufferTracer = hspec  $ do
---   describe "TransformBufferTracer should get a FrameBuffer, apply a tracer over all texels and produce FrameBuffer of the same size with results of the tracer" $ do
---     it "Apply identity tracer to all texels of a buffer" $ do
---       let buffer = FrameBuffer 2 2 [1, 2, 3, 4] in
---         trace (transformBufferTracer identityTracer buffer) emptyTracingPass `shouldBe` Right (emptyTracingPass, buffer)
 
 -- testGenerateIntersectionsTracer :: IO()
 -- testGenerateIntersectionsTracer = hspec $ do
