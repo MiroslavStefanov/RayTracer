@@ -1,10 +1,15 @@
---import Tracing.Tracer_Test
+import Tracing.Tracer_Test
+import Shading.Color_Test
 import GeometryIntersect_Test
 
 import Test.Hspec
 
 main :: IO ()
 main = hspec $ do
+  describe "Tests for Ray Tracer" $ do
+    it "" testTracerModule 
+    it "" testColorModule 
+    it "" testGeometryModule
   -- describe "Package Tracing" $ do
   --   context "Module Tracer" $ do
   --     it "" testIdentityTracer
@@ -18,11 +23,4 @@ main = hspec $ do
   --     it "" testTransformBufferTracer
   --     it "" testShadeTracer
   --     it "" testGenerateIntersectionsTracer
-  describe "Geometry intersections" $ do
-    context "Intersection results" $ do
-      it "" testIntersectPlaneWithRay
-      it "" testIntersectSphereWithRay
-      it "" testIntersectTriangleWithRay
-      it "" testIntersectParallelepipedWithRay
-      it "" testIntersectConeWithRay
-      it "" testIntersectTorusWithRay
+  

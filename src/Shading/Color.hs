@@ -29,6 +29,9 @@ clamp (Rgb r g b) = let
 white :: Rgb
 white = Rgb 1 1 1
 
+black :: Rgb
+black = Rgb 0 0 0
+
 toRgb24 :: Rgb -> (Word8, Word8, Word8)
 toRgb24 (Rgb r g b) = (convert r, convert g, convert b) where
     convert = floor . (*255.0)

@@ -157,4 +157,15 @@ testIntersectTorusWithRay = hspec $ do
                                                                  5
                                                                  (0, 0))
     it "Should return Nothing" $ do
-      intersect testRay9 testTorus `shouldBe` Nothing          
+      intersect testRay9 testTorus `shouldBe` Nothing 
+
+testGeometryModule :: IO()
+testGeometryModule = hspec $ do
+  describe "Geometry intersections" $ do
+    context "Intersection results" $ do
+      it "" testIntersectPlaneWithRay
+      it "" testIntersectSphereWithRay
+      it "" testIntersectTriangleWithRay
+      it "" testIntersectParallelepipedWithRay
+      it "" testIntersectConeWithRay
+      it "" testIntersectTorusWithRay         

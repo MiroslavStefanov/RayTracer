@@ -75,6 +75,15 @@ testAnyIntersectionsTracer = hspec $ do
       trace anyIntersectionsTracer pass `shouldBe` Right (pass, True) where
         pass = TracingPass [Nothing] []
 
+testTracerModule :: IO()
+testTracerModule = hspec $ do
+  describe "Tracer module" $ do
+    it "" testIdentityTracer
+    it "" testAbortTracer
+    it "" testShootRayTracer
+    it "" testGetIntersectionTracer
+    it "" testAnyIntersectionsTracer
+
 -- testIndexTexelsTracer :: IO()
 -- testIndexTexelsTracer = hspec $ do
 --   describe "IndexTexelsTracer should produce FrameBuffer that contains texel coordinates of each texel" $ do 
