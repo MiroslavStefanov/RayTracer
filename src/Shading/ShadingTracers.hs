@@ -35,7 +35,6 @@ shootRaysFromIntersectionTracer scene = foldlM tracer [] where
               shootRayTracer reflectedRay
               return $ (Right diffuseContext, (1 - strength) * weight) : (Right reflectedContext, strength * weight) : totalDensity 
             FresnelMaterial eta strength -> let
-              --ownColorDensity = (Left (sample diffuse (coordinates intersection)), (1 - strength) * weight) : totalDensity
               reflectionRatio = min 1.0 (Vector.rSchlick2 (normal intersection) rayDirection 1 eta)
               reflectedDensity = (Right reflectedContext, reflectionRatio * strength * weight)
               maybeTransmittedDirection = Vector.refract (normal intersection) rayDirection 1 eta

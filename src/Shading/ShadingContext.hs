@@ -4,6 +4,7 @@ import Ray
 import Intersection
 import Shading.Texture
 import Shading.Color
+import Tracing.Tracer
 
 data ShadingContext = ShadingContext {
   incommingRay :: Ray,
@@ -20,3 +21,6 @@ getShadingColor density = foldl addWeightedColor (Rgb 0 0 0) density where
     case value of
       Left color -> clamp (totalColor `add` scale weight color)
       Right _ -> Rgb 0 0 0
+
+initialDensityTracer :: Ray -> Tracer ShadingDensity
+initialDensityTracer ray = identityTracer [(Right (ShadingContext ray emptyIntersection), 1)]

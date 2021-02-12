@@ -28,6 +28,7 @@ import Geometry
 import Data.Foldable (foldlM)
 import Data.Time.Clock
 import Data.Maybe ( fromMaybe )
+import PinholeCamera
 
 shadingStepTracer :: Scene -> FrameBuffer ShadingDensity -> Tracer (FrameBuffer ShadingDensity)
 shadingStepTracer scene buffer = do
@@ -51,9 +52,10 @@ renderSceneTracer :: Int -> Int -> PinholeCamera -> Scene -> Int -> Tracer (Fram
 renderSceneTracer bufferWidth bufferHeight camera scene maxRecursionDepth = 
   let indexedBuffer = createBuffer bufferWidth bufferHeight
   in do
-  initialBuffer <- transformBufferTracer (shootCameraRayTracer camera) indexedBuffer
-  shadedBuffer <- shadeFrameBufferTracer scene initialBuffer maxRecursionDepth
-  transformBufferTracer (identityTracer . getShadingColor) shadedBuffer
+    cameraRaysBuffer <- transformBufferTracer (shootCameraRayTracer camera) indexedBuffer
+    initialBuffer <- transformBufferTracer initialDensityTracer cameraRaysBuffer
+    shadedBuffer <- shadeFrameBufferTracer scene initialBuffer maxRecursionDepth
+    transformBufferTracer (identityTracer . getShadingColor) shadedBuffer
 
 traceScene :: Int -> Int -> PinholeCamera -> Scene -> Int -> Either TraceError (FrameBuffer Rgb)
 traceScene bufferWidth bufferHeight camera scene recursionDepth =
@@ -148,7 +150,7 @@ debugRenderScene :: Scene -> Perspective -> IO Int
 debugRenderScene scene (Perspective camera width height) = 
   let 
     indexedBuffer = createBuffer width height
-    initializeTracer = transformBufferTracer (shootCameraRayTracer camera) indexedBuffer
+    initializeTracer = transformBufferTracer (shootCameraRayTracer camera) indexedBuffer >>= transformBufferTracer initialDensityTracer
     Right (initialPass, initialBuffer) = trace initializeTracer emptyTracingPass
     in do
       (window, renderer) <- openWindow width height

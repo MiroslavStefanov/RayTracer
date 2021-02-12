@@ -12,6 +12,9 @@ data Intersection = Intersection {
   coordinates :: Texel
 }
 
+emptyIntersection :: Intersection
+emptyIntersection = Intersection (0,0,0) (0,0,0) emptyTexture 0 (0, 0) 
+
 addTexture :: Intersection -> Texture -> Intersection
 addTexture (Intersection pos normal _ distance coords) texture =
   Intersection pos normal texture distance coords
