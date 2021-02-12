@@ -1,5 +1,6 @@
 import Tracing.Tracer_Test
 import Shading.Color_Test
+import Shading.FrameBuffer_Test
 import GeometryIntersect_Test
 
 import Test.Hspec
@@ -10,17 +11,5 @@ main = hspec $ do
     it "" testTracerModule 
     it "" testColorModule 
     it "" testGeometryModule
-  -- describe "Package Tracing" $ do
-  --   context "Module Tracer" $ do
-  --     it "" testIdentityTracer
-  --     it "" testAbortTracer
-  --     it "" testShootRayTracer
-  --     it "" testGetIntersectionTracer
-  --     it "" testAnyIntersectionsTracer
-  --     it "" testIndexTexelsTracer
-  --     it "" testShootCameraRayTracer
-  --     it "" testCameraRayIntersectionTracer
-  --     it "" testTransformBufferTracer
-  --     it "" testShadeTracer
-  --     it "" testGenerateIntersectionsTracer
-  
+    it "" testGeometryModule
+    it "" testFrameBufferModule

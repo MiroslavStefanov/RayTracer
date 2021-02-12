@@ -13,8 +13,8 @@ createEmptyBuffer :: FrameBuffer a
 createEmptyBuffer = FrameBuffer 0 0 []
 
 createBuffer :: Int -> Int -> FrameBuffer Texel
-createBuffer 0 _ = FrameBuffer 0 0 []
-createBuffer _ 0 = FrameBuffer 0 0 []
+createBuffer 0 _ = createEmptyBuffer
+createBuffer _ 0 = createEmptyBuffer
 createBuffer width height = FrameBuffer width height newBuffer where
   wStep = 1.0 / fromIntegral (width - 1) :: Float
   hStep = 1.0 / fromIntegral (height - 1) :: Float

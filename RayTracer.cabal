@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 383bb3fed3b35754a65c143c6b8fab42e974d2bd9a1ee129e2e4efad62d3a5bf
+-- hash: b9ff847a36ba8b32828a0ad0f36019c024574c4b86075c282e20a79b2040afff
 
 name:           RayTracer
 version:        0.1.0.0
@@ -93,6 +93,7 @@ test-suite RayTracer-test
   other-modules:
       GeometryIntersect_Test
       Shading.Color_Test
+      Shading.FrameBuffer_Test
       Tracing.Tracer_Test
       Paths_RayTracer
   hs-source-dirs:
