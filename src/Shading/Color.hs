@@ -32,6 +32,39 @@ white = Rgb 1 1 1
 black :: Rgb
 black = Rgb 0 0 0
 
+red' :: Rgb
+red' = Rgb 1 0 0
+
+lime :: Rgb
+lime = Rgb 0 1 0
+
+blue' :: Rgb
+blue' = Rgb 0 0 1
+
+green' :: Rgb
+green' = Rgb 0 0.5 0
+
+yellow :: Rgb
+yellow = Rgb 1 1 0
+
+cyan :: Rgb
+cyan = Rgb 0 1 1
+
+magenta :: Rgb
+magenta = Rgb 1 0 1
+
+purple :: Rgb
+purple = Rgb 0.5 0 0.5
+
+navy :: Rgb
+navy = Rgb 0 0 0.5
+
+silver :: Rgb
+silver = Rgb 0.75 0.75 0.75
+
+skyBlue :: Rgb
+skyBlue = Rgb 0.53 0.8 0.92
+
 toRgb24 :: Rgb -> (Word8, Word8, Word8)
 toRgb24 (Rgb r g b) = (convert r, convert g, convert b) where
     convert = floor . (*255.0)

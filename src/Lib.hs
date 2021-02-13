@@ -140,6 +140,8 @@ debugRenderLoop renderer scene buffer@(FrameBuffer w h densities) pass = do
       then return (-1)
     else if any (isKeyPress SDL.KeycodeRight) events
       then return 1
+    -- else if any (isKeyPress SDL.KeycodeDown) events
+    --   then return 2
     else
         let colorBuffer = FrameBuffer w h $ map getShadingColor densities
         in do
