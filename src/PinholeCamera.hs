@@ -14,7 +14,7 @@ data PinholeCamera = PinholeCamera {
   up :: Vec.Vector,
   fov :: Float,
   aspectRatio :: Float
-}
+} deriving (Show, Eq)
 
 data Perspective = Perspective {
   camera :: PinholeCamera,

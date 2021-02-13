@@ -9,7 +9,7 @@ import Intersection
 import Tracing.Tracer
 
 type Lighting = ShadingContext -> Rgb
-type Occlusion = Tracer Float
+type Occlusion = Vector.Vector -> Tracer Float
 type VisibilityCheck = Intersection -> Tracer ()
 
 data Light = Light {
@@ -54,14 +54,13 @@ instance LightSource PointLight where
             rayToLight = (getPositiveBiasedIntersectionPosition intersection, rayDirection)
     
     getShadowMultiplier 
-        (PointLight _ _ lPosition) = do
+        (PointLight _ _ lPosition) point = do
             shadowIntersection <- getIntersectionTracer
             case shadowIntersection of
                 Nothing -> identityTracer 1.0
-                Just intersection -> identityTracer $ 
+                Just intersection -> return $ 
                     if distance intersection ^ 2 < distanceToLightSquared then 1 - alpha else 1.0 where
-                        distanceToLightSquared = Vector.lengthSqr $ rayOrigin `Vector.subtract` lPosition
-                        rayOrigin = getPositiveBiasedIntersectionPosition intersection
+                        distanceToLightSquared = Vector.lengthSqr $ point `Vector.subtract` lPosition
                         alpha = sample (alphaSampler $ texture intersection) $ coordinates intersection
 
 data AmbientLight = AmbientLight Float Rgb deriving (Show, Eq)
@@ -74,4 +73,4 @@ instance LightSource AmbientLight where
             diffuseColor = sample (diffuseSampler $ texture intersection) $ coordinates intersection
     
     checkVisibility _ _ = identityTracer ()
-    getShadowMultiplier _ = identityTracer 1.0
+    getShadowMultiplier _ _ = identityTracer 1.0
