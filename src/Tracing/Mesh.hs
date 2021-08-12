@@ -7,3 +7,6 @@ data Mesh = Mesh {
   geometry :: Geometry,
   texture :: Texture
 }
+
+instance Intersectable Mesh where
+  intersect ray (Mesh geometry texture) = intersect ray geometry

@@ -25,9 +25,8 @@ getLightSourcesCount = length . lightSources
 traceRay :: Scene -> Ray -> Maybe Intersection
 traceRay (Scene objects _) ray =
   foldl closerIntersection Nothing intersectionsWithTexture
-  where geometries = map geometry objects
-        textures = map (Just . Tracing.Mesh.texture) objects
-        intersections = map (intersect ray) geometries
+  where textures = map (Just . Tracing.Mesh.texture) objects
+        intersections = map (intersect ray) objects
         setTextures = map (fmap addTexture) intersections
         intersectionsWithTexture = zipWith (<*>) setTextures textures
 
