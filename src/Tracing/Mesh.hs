@@ -1,12 +1,12 @@
 module Tracing.Mesh where
 
-import Geometry
-import Shading.Texture
+import Intersection
+import Ray
 
 data Mesh = Mesh {
-  geometry :: Geometry,
-  texture :: Texture
+  testIntersection :: Ray -> Maybe Intersection,
+  shaderId :: Int
 }
 
 instance Intersectable Mesh where
-  intersect ray (Mesh geometry texture) = intersect ray geometry
+  intersect r m = testIntersection m r

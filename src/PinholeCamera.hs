@@ -3,7 +3,6 @@ module PinholeCamera where
 import Ray
 import Base
 import qualified Vector as Vec
-import Tracing.Tracer
 
 data PinholeCamera = PinholeCamera {
   topLeft :: Vec.Vector,
@@ -56,10 +55,3 @@ getRay (xInterp, yInterp) (PinholeCamera topLeft
         xx = Vec.scale xInterp (Vec.subtract topRight topLeft)
         yy = Vec.scale yInterp (Vec.subtract bottomLeft topLeft)
         direction = Vec.normalize (Vec.add (Vec.add topLeft xx) yy)
-
-shootCameraRayTracer :: PinholeCamera  -> Texel -> Tracer Ray
-shootCameraRayTracer camera texel = let
-  cameraRay = getRay texel camera
-  in do
-    shootRayTracer cameraRay
-    return cameraRay

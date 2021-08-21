@@ -1,38 +1,75 @@
 module Tracing.Scene where
 
-import Tracing.TracingPass
-import Tracing.Tracer
 import Tracing.Mesh
 import Ray
 import Intersection
-import LightSource
-import Geometry
+import Lighting.LightSource
 
-data Scene = Scene {
-  objects :: [Mesh],
-  lightSources :: [Light]
+data SceneNode = SceneNode {
+  meshes :: [Mesh],
+  children :: [SceneNode]
 }
 
+data Scene = Scene {
+  root :: SceneNode,
+  lightSources :: [Lighting]
+}
+
+data Hit = Hit {
+  mesh :: Mesh,
+  intersection :: Intersection
+}
+
+emptyScene :: Scene
+emptyScene = Scene (SceneNode [] []) []
+
+closerHit :: Maybe Hit -> Maybe Hit -> Maybe Hit
+closerHit Nothing Nothing = Nothing
+closerHit Nothing ii = ii
+closerHit ii Nothing = ii
+closerHit i1@(Just (Hit _ leftIntersection))
+                   i2@(Just ( Hit _ rightIntersection ))
+  |distance leftIntersection < distance rightIntersection = i1
+  |otherwise = i2
+
+traceRay :: Scene -> Ray -> Maybe Hit
+traceRay (Scene root lights) ray = let
+  meshIntersections = map (intersect ray) $ meshes root
+  makeHit = \maybeIntersection mesh -> fmap (Hit mesh) maybeIntersection
+  hits = zipWith makeHit meshIntersections $ meshes root
+    in foldl closerHit Nothing hits
+
+
+makeMesh :: Intersectable i =>  i -> Int -> Mesh
+makeMesh intersectable = Mesh (`intersect` intersectable)
+
 addMesh :: Scene -> Mesh -> Scene
-addMesh (Scene objects l) mesh = Scene (mesh : objects) l
+addMesh (Scene root lights) mesh = Scene newRoot lights where
+  newRoot = SceneNode (mesh : meshes root) $ children root
 
-addLightSrc :: LightSource s => Scene -> s -> Scene
-addLightSrc (Scene o lightSources) lightSrc = Scene o (getLighting lightSrc : lightSources)
+addLight :: LightSource s => Scene -> s -> Scene
+addLight (Scene root lights) lightSource = Scene root (lighting lightSource : lights)
 
-getLightSourcesCount :: Scene -> Int
-getLightSourcesCount = length . lightSources
+-- addMesh :: Scene -> Mesh -> Scene
+-- addMesh (Scene objects l) mesh = Scene (mesh : objects) l
 
-traceRay :: Scene -> Ray -> Maybe Intersection
-traceRay (Scene objects _) ray =
-  foldl closerIntersection Nothing intersectionsWithTexture
-  where textures = map (Just . Tracing.Mesh.texture) objects
-        intersections = map (intersect ray) objects
-        setTextures = map (fmap addTexture) intersections
-        intersectionsWithTexture = zipWith (<*>) setTextures textures
+-- addLightSrc :: LightSource s => Scene -> s -> Scene
+-- addLightSrc (Scene o lightSources) lightSrc = Scene o (getLighting lightSrc : lightSources)
 
-calculateNextTracingPass :: TracingPass -> Scene -> TracingPass
-calculateNextTracingPass (TracingPass _ rays) scene =
-  TracingPass (map (traceRay scene) rays) []
+-- getLightSourcesCount :: Scene -> Int
+-- getLightSourcesCount = length . lightSources
 
-generateIntersectionsTracer :: Scene -> Tracer (Int, Int)
-generateIntersectionsTracer scene = Tracer $ \(TracingPass i rays) -> Right (calculateNextTracingPass (TracingPass [] $ reverse rays) scene, (Prelude.length i, Prelude.length rays))
+-- traceRay :: Scene -> Ray -> Maybe Intersection
+-- traceRay (Scene objects _) ray =
+--   foldl closerIntersection Nothing intersectionsWithTexture
+--   where textures = map (Just . Tracing.Mesh.texture) objects
+--         intersections = map (intersect ray) objects
+--         setTextures = map (fmap addTexture) intersections
+--         intersectionsWithTexture = zipWith (<*>) setTextures textures
+
+-- calculateNextTracingPass :: TracingPass -> Scene -> TracingPass
+-- calculateNextTracingPass (TracingPass _ rays) scene =
+--   TracingPass (map (traceRay scene) rays) []
+
+-- generateIntersectionsTracer :: Scene -> Tracer (Int, Int)
+-- generateIntersectionsTracer scene = Tracer $ \(TracingPass i rays) -> Right (calculateNextTracingPass (TracingPass [] $ reverse rays) scene, (Prelude.length i, Prelude.length rays))

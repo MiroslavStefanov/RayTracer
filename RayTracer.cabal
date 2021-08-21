@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d0ea1f50faa3bafbd4ca727d7c997a244e8390b95f33284ff21a9b46e8a7cab4
+-- hash: 50bf7ceea24e431cc777dcdc363e1c7ff67a2aba2f77414c919d39b447202d12
 
 name:           RayTracer
 version:        0.1.0.0
@@ -33,21 +33,25 @@ library
       Geometry
       Intersection
       Lib
-      LightSource
+      Lighting.AmbientLight
+      Lighting.LightSource
+      Lighting.PointLight
       PinholeCamera
       Ray
       Rendering
+      SceneBuilder
       Shading.Color
+      Shading.ColorShader
       Shading.FrameBuffer
+      Shading.PhongShader
+      Shading.PixelState
+      Shading.ReflectionShader
       Shading.Sampler
-      Shading.ShadingContext
-      Shading.ShadingTracers
+      Shading.Shader
       Shading.Texture
       Solver
       Tracing.Mesh
       Tracing.Scene
-      Tracing.Tracer
-      Tracing.TracingPass
       Vector
   other-modules:
       Paths_RayTracer
@@ -60,6 +64,7 @@ library
     , linear
     , monad-loops
     , numeric-limits
+    , random
     , sdl2
     , text
     , time
@@ -81,6 +86,7 @@ executable RayTracer-exe
     , linear
     , monad-loops
     , numeric-limits
+    , random
     , sdl2
     , text
     , time
@@ -111,6 +117,7 @@ test-suite RayTracer-test
     , linear
     , monad-loops
     , numeric-limits
+    , random
     , sdl2
     , text
     , time

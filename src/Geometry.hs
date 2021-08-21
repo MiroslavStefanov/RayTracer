@@ -39,15 +39,12 @@ data Geometry =
     height :: Float
   } deriving (Show, Read, Eq)
 
-class Intersectable a where
-  intersect :: Ray -> a -> Maybe Intersection
-
 instance Intersectable Geometry where
   intersect ray@(start, direction)
             (Plane position normal)
     |abs denom <= epsilon = Nothing
     |scalar < 0 = Nothing
-    |otherwise = Just (Intersection newPosition normal emptyTexture scalar newCoords)
+    |otherwise = Just (Intersection newPosition normal scalar newCoords)
       where denom = Vec.dot normal direction
             scalar = Vec.dot (Vec.subtract position start) normal / denom
             newPosition = scaleTo scalar ray
@@ -61,7 +58,7 @@ instance Intersectable Geometry where
             (Sphere position radius)
     |d <= 0 = Nothing
     |xMin <= 0 = Nothing
-    |otherwise = Just (Intersection newPosition newNormal emptyTexture xMin newCoords)
+    |otherwise = Just (Intersection newPosition newNormal xMin newCoords)
       where a = Vec.lengthSqr direction
             b = Vec.dot direction (Vec.subtract start position) * 2
             c = Vec.lengthSqr (Vec.subtract start position) - radius * radius
@@ -81,7 +78,7 @@ instance Intersectable Geometry where
     |v < 0 || u + v > det = Nothing
     |uu < 0 || uu > 1 = Nothing
     |vv < 0 || uu + vv > 1 = Nothing
-    |otherwise = Just (Intersection newPosition normal emptyTexture distance newCoords)
+    |otherwise = Just (Intersection newPosition normal distance newCoords)
       where e1 = Vec.subtract bb aa
             e2 = Vec.subtract cc aa
             pVec = Vec.cross direction e2
@@ -107,7 +104,7 @@ instance Intersectable Geometry where
     |t2Min > t2Max || t2Max < 0 = Nothing
     |abs f3 <= pEps && ((-e3) - cLen > 0 || (-e3) + cLen < 0) = Nothing
     |t3Min > t3Max || t3Max < 0 = Nothing
-    |otherwise = Just (Intersection hitPoint localNormal emptyTexture t newCoords)
+    |otherwise = Just (Intersection hitPoint localNormal t newCoords)
       where
         tmin = -99999.9
         tmax = 99999.9
@@ -143,7 +140,7 @@ instance Intersectable Geometry where
     |null solution = Nothing
     |t1 <= 0 = Nothing
     |r < Vec.zz position || r > Vec.zz position + height = Nothing
-    |otherwise = Just (Intersection hitPoint localNormal emptyTexture tShapeHit newCoords)
+    |otherwise = Just (Intersection hitPoint localNormal tShapeHit newCoords)
       where
         localRay@(start, direction) = (Vec.subtract origStart position, origDirection)
         ox = Vec.xx start
@@ -164,7 +161,7 @@ instance Intersectable Geometry where
         localNormal = computeNormalAtPoint cone localHitPoint
         hitPoint = scaleTo tShapeHit ray
         r = Vec.zz hitPoint
-        atanHit = atan2 (Vec.yy hitPoint) (Vec.xx hitPoint)
+        atanHit = atan2 (Vec.xx hitPoint) (Vec.yy hitPoint)
         phi = if atanHit < 0 then atanHit + 2 * pi else atanHit
         u = phi
         v = r / height
@@ -173,7 +170,7 @@ instance Intersectable Geometry where
   intersect ray@(origStart, origDirection)
             torus@(Torus position sRadius tRadius)
     |null solution = Nothing
-    |otherwise = Just (Intersection hitPoint localNormal emptyTexture minT newCoords)
+    |otherwise = Just (Intersection hitPoint localNormal minT newCoords)
       where
         localRay@(start, direction) = (Vec.subtract origStart position, origDirection)
         oz = Vec.zz start

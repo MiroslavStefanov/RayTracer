@@ -1,7 +1,7 @@
 module Shading.FrameBuffer where
 
 import Base
-import Tracing.Tracer
+import Control.Monad (Functor)
 
 data FrameBuffer a = FrameBuffer{
   width :: Int,
@@ -20,7 +20,5 @@ createBuffer width height = FrameBuffer width height newBuffer where
   hStep = 1.0 / fromIntegral (height - 1) :: Float
   newBuffer = [(u, v) | v <- [0, wStep .. 1], u <- [0, hStep .. 1]]
 
-transformBufferTracer :: (a -> Tracer b) -> FrameBuffer a -> Tracer (FrameBuffer b)
-transformBufferTracer func (FrameBuffer w h buff) = let
-  newBuffer = mapM func buff in
-    FrameBuffer w h <$> newBuffer
+instance Functor FrameBuffer where
+  fmap mapper (FrameBuffer w h buffer) = FrameBuffer w h $  fmap mapper buffer

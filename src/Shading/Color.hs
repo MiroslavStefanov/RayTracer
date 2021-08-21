@@ -65,6 +65,9 @@ silver = Rgb 0.75 0.75 0.75
 skyBlue :: Rgb
 skyBlue = Rgb 0.53 0.8 0.92
 
+sampleColors :: [Rgb]
+sampleColors = [skyBlue, silver, navy, purple, magenta, cyan, yellow]
+
 toRgb24 :: Rgb -> (Word8, Word8, Word8)
 toRgb24 (Rgb r g b) = (convert r, convert g, convert b) where
     convert = floor . (*255.0)

@@ -30,6 +30,7 @@ dependencies:
 - text
 - vector
 - monad-loops
+- random
 
 library:
   source-dirs: src
