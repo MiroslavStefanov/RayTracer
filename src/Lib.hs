@@ -26,14 +26,8 @@ import qualified Shading.Color as Color
 import Shading.Color
 import SceneBuilder
 
-
-computePixel :: Scene -> [Shader] -> PixelState -> PixelState
-computePixel scene shaders state = case state of
-  (Shading incommingRay hit) -> let
-            shadersLength = length shaders
-            shader = shaders !! (shadersLength - index - 1)
-            index = shaderId $ mesh hit 
-            in shader scene incommingRay (intersection hit)
+computePixel :: ShadingContext -> PixelState -> PixelState
+computePixel ctx@(ShadingContext scene shaders) state = case state of
   (Ready color) -> Ready color
   (Tracing ray) -> let
     maybeHit = traceRay scene ray in
@@ -41,7 +35,7 @@ computePixel scene shaders state = case state of
       Nothing -> Ready black
       Just hit -> Shading ray hit
   (Composition states weights) -> let
-    computedStates = map (computePixel scene shaders) states
+    computedStates = map (computePixel ctx) states
     weightedStates = zip computedStates weights
     colorCombiner totalColor (pixel, weight) = Color.clamp $ Color.add totalColor $ Color.scale weight $ colorizePixel pixel
     readyColor = foldl colorCombiner black weightedStates
@@ -49,20 +43,22 @@ computePixel scene shaders state = case state of
     in case nextStates of
       [] -> Ready readyColor
       _ -> Composition (Ready readyColor : nextStates) (1.0 : nextWeights)
+  (Shading incommingRay hit) -> let
+            shadersLength = length shaders
+            shader = shaders !! (shadersLength - index - 1)
+            index = shaderId $ mesh hit 
+            in shader scene incommingRay (intersection hit)
 
-
-
-computeImage :: Int -> Scene -> [Shader] -> FrameBuffer PixelState -> FrameBuffer Rgb
-computeImage depth scene shaders oldBuffer = image where
-  newBuffer = fmap (computePixel scene shaders) oldBuffer
+computeImage :: Int -> ShadingContext -> FrameBuffer PixelState -> FrameBuffer Rgb
+computeImage depth shadingContext oldBuffer = image where
+  newBuffer = fmap (computePixel shadingContext) oldBuffer
   isReady = all canColorizePixel (buffer newBuffer)
   image = if isReady ||  depth <= 0 then
     fmap colorizePixel newBuffer else
-      computeImage (depth - 1) scene shaders newBuffer
+      computeImage (depth - 1) shadingContext newBuffer
 
-
-traceImage :: Int -> Scene -> [Shader] -> Perspective -> FrameBuffer Rgb
-traceImage depth scene shaders p = computeImage depth scene shaders initialBuffer where
+traceImage :: Int -> ShadingContext -> Perspective -> FrameBuffer Rgb
+traceImage depth shadingContext p = computeImage depth shadingContext initialBuffer where
   initialBuffer = fmap Tracing raysBuffer
   raysBuffer = fmap (\t -> getRay t $ camera p) texelBuffer
   texelBuffer = createBuffer (PinholeCamera.width p) (PinholeCamera.height p)
@@ -143,14 +139,14 @@ renderLoop renderer image = do
     renderLoop renderer image
 
 renderScene :: ShadingContext -> Perspective -> Int -> IO()
-renderScene ctx@(ShadingContext scene shaders) perspective@(Perspective camera width height) recDepth = do
+renderScene shadingContext perspective@(Perspective camera width height) recDepth = do
   (window, renderer) <- openWindow width height
   shouldQuit <- renderLoop renderer image
   if shouldQuit
   then return ()
   else do
-    renderScene ctx perspective recDepth where
-      image = traceImage recDepth scene shaders perspective
+    renderScene shadingContext perspective recDepth where
+      image = traceImage recDepth shadingContext perspective
 
 -- debugRenderLoop :: SDL.Renderer -> Scene -> FrameBuffer ShadingDensity -> TracingPass -> IO Int
 -- debugRenderLoop renderer scene buffer@(FrameBuffer w h densities) pass = do
