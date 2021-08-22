@@ -6,6 +6,7 @@ import Shading.Shader
 import Data.Bifunctor
 import Tracing.Mesh
 import Lighting.LightSource
+import Intersection
 
 data ShadingContext = ShadingContext {
     scene :: Scene,
@@ -52,6 +53,10 @@ addShaderBuilder shader = SceneBuilder builder where
 addMeshBuilder :: Mesh -> SceneBuilder ()
 addMeshBuilder m = SceneBuilder builder where
     builder (ShadingContext scene shaders) = (ShadingContext (addMesh scene m) shaders, ())
+
+addMeshesBuilder :: Intersectable i => [i] -> (Int -> Int) -> SceneBuilder ()
+addMeshesBuilder intersectables shaderIdMapper = mapM_ addMeshBuilder $ zipWith makeMesh intersectables [ shaderIdMapper x | x <- [0 .. length intersectables]]
+
 
 addLightBuilder :: LightSource s => s -> SceneBuilder ()
 addLightBuilder source = SceneBuilder builder where

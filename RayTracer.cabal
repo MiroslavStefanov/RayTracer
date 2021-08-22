@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 50bf7ceea24e431cc777dcdc363e1c7ff67a2aba2f77414c919d39b447202d12
+-- hash: 0ad16c6f87d547484d04a8fc8bb5031af263c6da589bc2df9cf29fccaff3cfa9
 
 name:           RayTracer
 version:        0.1.0.0
@@ -42,7 +42,9 @@ library
       SceneBuilder
       Shading.Color
       Shading.ColorShader
+      Shading.CompositeShader
       Shading.FrameBuffer
+      Shading.FresnelShader
       Shading.PhongShader
       Shading.PixelState
       Shading.ReflectionShader

@@ -5,10 +5,10 @@ import Shading.Sampler
 
 data Texture = Texture {
   diffuseSampler :: Sampler Rgb,
-  specularSampler :: Sampler (Float, Float),
-  alphaSampler :: Sampler Float
+  specularSampler :: Sampler (Float, Float)
 }
 
+-- shadeTexture :: Texture -> Texel 
 
 solidColorTexture :: Rgb -> Texture
-solidColorTexture color = Texture (constantSampler color) (constantSampler (1, 1)) (constantSampler 1.0)
+solidColorTexture color = Texture (constantSampler color) (constantSampler (1, 1))

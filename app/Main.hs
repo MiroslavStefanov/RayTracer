@@ -15,12 +15,17 @@ import Shading.Shader
 import Shading.ColorShader
 import Shading.ReflectionShader
 import Shading.PhongShader
+import Shading.CompositeShader
 import SceneBuilder
 
 import Lighting.PointLight
 import Lighting.AmbientLight
 
 import System.Random
+import Shading.ReflectionShader (ReflectionShader(ReflectionShader))
+import Shading.PhongShader (PhongShader(PhongShader))
+import Shading.Texture (solidColorTexture)
+import Shading.Color (sampleColors)
 
 -- wallTexture :: Sampler Rgb -> Texture
 -- wallTexture colorSampler = Texture colorSampler (constantSampler 1) 0 8 PhongMaterial
@@ -33,7 +38,7 @@ import System.Random
 addShader :: Shading s => s -> [Shader] -> ([Shader], Int)
 addShader shader shaders = (newShaders, index) where
   index = length shaders
-  newShaders = shading shader : shaders 
+  newShaders = shading shader : shaders
 
 
 walls :: [Geometry]
@@ -48,7 +53,7 @@ walls = [
 -- wallMeshes :: ([Mesh], [Shader])
 -- wallMeshes = (meshes, shaders) where
 --   meshes = zipWith Mesh walls shaderIds
-  
+
 --   map wallShaders wallSamplers
 --   wallShaders color = addShader
 --   wallSamplers = [
@@ -58,7 +63,7 @@ walls = [
 --     Rgb 0 0 1,
 --     Rgb 0.46 0.36 0.66
 --     ]
-  
+
 -- scene2 :: Scene
 -- scene2 = scene
 --   where 
@@ -155,12 +160,12 @@ smallBalls :: [Geometry]
 smallBalls = [
   Sphere (0, 20, 1) 1,
   Sphere (3, 21, 1) 1,
-  Sphere (6, 23, 1) 1, 
+  Sphere (6, 23, 1) 1,
   Sphere (9, 21, 1) 1,
   Sphere (12, 23, 1) 1,
   Sphere (0, 30, 1) 1,
   Sphere (3, 31, 1) 1,
-  Sphere (6, 33, 1) 1, 
+  Sphere (6, 33, 1) 1,
   Sphere (9, 31, 1) 1,
   Sphere (12, 33, 1) 1,
   Sphere (-3, 30, 1) 1,
@@ -175,12 +180,12 @@ smallBalls = [
   Sphere (9, 20, 1) 1,
   Sphere (0, 0, 1) 1,
   Sphere (3, 3, 1) 1,
-  Sphere (6, 6, 1) 1, 
+  Sphere (6, 6, 1) 1,
   Sphere (9, 9, 1) 1,
   Sphere (12, 12, 1) 1,
   Sphere (0, 15, 1) 1,
   Sphere (3, 18, 1) 1,
-  Sphere (6, 0, 1) 1, 
+  Sphere (6, 0, 1) 1,
   Sphere (9, 3, 1) 1,
   Sphere (12, 6, 1) 1,
   Sphere (-3, 9, 1) 1,
@@ -195,12 +200,12 @@ smallBalls = [
   Sphere (9, 15, 1) 1,
   Sphere (15, 20, 1) 1,
   Sphere (18, 21, 1) 1,
-  Sphere (21, 23, 1) 1, 
+  Sphere (21, 23, 1) 1,
   Sphere (24, 21, 1) 1,
   Sphere (27, 23, 1) 1,
   Sphere (15, 30, 1) 1,
   Sphere (18, 31, 1) 1,
-  Sphere (21, 33, 1) 1, 
+  Sphere (21, 33, 1) 1,
   Sphere (24, 31, 1) 1,
   Sphere (27, 33, 1) 1,
   Sphere (-15, 30, 1) 1,
@@ -306,8 +311,7 @@ bigBalls = [
 
 walls3 :: [Geometry]
 walls3 = [
-  Plane (0, 0, 0) (0, 0, 1), --bottom
-  Plane (0, 60, 0) (0, -1, 0) --front
+  Plane (0, 0, 0) (0, 0, 1) --bottom
   ]
 
 -- wall3Meshes :: [Mesh]
@@ -337,11 +341,12 @@ walls3 = [
 --   scene = foldl addMesh emptyScene meshes
 
 scene1 :: SceneBuilder ()
-scene1 = do
+scene1 = let shaderGenerator index = mod index $ length sampleColors in do
   colorShaders <- mapM (addShaderBuilder . PhongShader . solidColorTexture) sampleColors
-  mapM_ addMeshBuilder $ zipWith makeMesh walls3 [mod x (length colorShaders) | x <- [0 .. length walls3]]
-  mapM_ addMeshBuilder $ zipWith makeMesh smallBalls [mod x (length colorShaders) | x <- [0 .. length smallBalls]]
-  mapM_ addMeshBuilder $ zipWith makeMesh bigBalls [mod x (length colorShaders) | x <- [0 .. length bigBalls]]
+  reflectiveShaders <- mapM ((addShaderBuilder . composeShaders 0.25 (shading ReflectionShader)) . (shading . PhongShader . solidColorTexture)) sampleColors
+  addMeshesBuilder walls3 shaderGenerator
+  addMeshesBuilder smallBalls shaderGenerator
+  addMeshesBuilder bigBalls $ \index -> mod index (length reflectiveShaders) + length colorShaders
   addLightBuilder $ PointLight 630 (Rgb 1 1 1) (-2, 40, 30)
   addLightBuilder $ PointLight 550 (Rgb 1 0.7 1) (0, 0, 30)
   addLightBuilder $ AmbientLight 0.3 white
@@ -351,7 +356,7 @@ perspective1 :: Int -> Int -> Perspective
 perspective1 = createPerspective (0, 0, 10) (0, 1, 10) (0, 0, 1) (pi/2.5)
 
 perspective2 :: Int -> Int -> Perspective
-perspective2 = createPerspective (5, 25, 30) (5, 25, 6) (0, 1, 0) (pi/2.5)
+perspective2 = createPerspective (5, 25, 45) (5, 25, 6) (0, 1, 0) (pi/2.5)
 
 sampleScenes :: [ShadingContext]
 sampleScenes = [getShadingContext scene1]
@@ -384,7 +389,7 @@ switchScenes contexts p index offset = let
     -- if cmd == 0 then return False
     -- else switchScenes scenes shaders p i cmd
 
-meshesCount :: Scene -> Int 
+meshesCount :: Scene -> Int
 meshesCount = length . meshes . root
 
 main :: IO ()
@@ -393,9 +398,9 @@ main = do
   imageWidth <- (readLn :: IO Int)
   putStrLn "Enter image height"
   imageHeight <- (readLn :: IO Int)
-  
-  let 
-    p = perspective2 imageWidth imageHeight 
+
+  let
+    p = perspective1 imageWidth imageHeight
     --count = meshesCount scene1 - 1
     in
       whileM_ (switchScenes sampleScenes p 0 0) $ return()
@@ -405,7 +410,7 @@ main = do
       -- let
       --   --shaders = shading ReflectionShader : map (shading . ColorShader) (zipWith3 Rgb reds greens blues) 
       --   in
-        
+
 
   -- let perspectives =  mapMultiple (mapMultiple [perspective1, perspective2] imageWidth) imageHeight in
   --   whileM_ (switchScenes sampleScenes perspectives (0, 0) (0, 0)) $ return()

@@ -12,7 +12,7 @@ data SceneNode = SceneNode {
 
 data Scene = Scene {
   root :: SceneNode,
-  lightSources :: [Lighting]
+  lightSources :: [(Lighting, Occlusion)]
 }
 
 data Hit = Hit {
@@ -48,7 +48,7 @@ addMesh (Scene root lights) mesh = Scene newRoot lights where
   newRoot = SceneNode (mesh : meshes root) $ children root
 
 addLight :: LightSource s => Scene -> s -> Scene
-addLight (Scene root lights) lightSource = Scene root (lighting lightSource : lights)
+addLight (Scene root lights) lightSource = Scene root ((lighting lightSource, occlusion lightSource) : lights)
 
 -- addMesh :: Scene -> Mesh -> Scene
 -- addMesh (Scene objects l) mesh = Scene (mesh : objects) l
