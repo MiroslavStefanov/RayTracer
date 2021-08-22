@@ -1,6 +1,7 @@
 module Shading.Color where
 
 import Data.Word
+import Control.Monad.Random
 
 data Rgb = Rgb {
     red :: Float,
@@ -66,7 +67,13 @@ skyBlue :: Rgb
 skyBlue = Rgb 0.53 0.8 0.92
 
 sampleColors :: [Rgb]
-sampleColors = [skyBlue, silver, navy, purple, magenta, cyan, yellow]
+sampleColors = [red', lime, blue', green', skyBlue, silver, navy, purple, magenta, cyan, yellow]
+
+getRandomColor :: (MonadRandom m) => m Rgb
+getRandomColor =
+    let n = length sampleColors in do
+    ii <- getRandomR (0, n-1)
+    return (sampleColors !! ii)    
 
 toRgb24 :: Rgb -> (Word8, Word8, Word8)
 toRgb24 (Rgb r g b) = (convert r, convert g, convert b) where

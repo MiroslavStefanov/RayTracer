@@ -311,7 +311,8 @@ bigBalls = [
 
 walls3 :: [Geometry]
 walls3 = [
-  Plane (0, 0, 0) (0, 0, 1) --bottom
+  Plane (0, 0, 0) (0, 0, 1), --bottom
+  Plane (0, 70, 0) (0, -1, 0) --front
   ]
 
 -- wall3Meshes :: [Mesh]
@@ -352,14 +353,29 @@ scene1 = let shaderGenerator index = mod index $ length sampleColors in do
   addLightBuilder $ AmbientLight 0.3 white
   return ()
 
+scene2 :: IO (SceneBuilder ())
+scene2 = let
+  shaderGenerator index = mod index $ length sampleColors
+  obb = Parallelepiped (4, 13, 12) (1,0,0) (0,1,0) (0,0,1) (1.8,2,2.5)
+  cone = Cone (-5, 35, 2) 5 15 in do
+    randomColors <- replicateM 10 getRandomColor
+    return $ do
+      colorShaders <- mapM (addShaderBuilder . PhongShader . solidColorTexture) randomColors
+      reflectiveShaders <- mapM ((addShaderBuilder . composeShaders 0.25 (shading ReflectionShader)) . (shading . PhongShader . solidColorTexture)) randomColors
+      addMeshesBuilder walls3 shaderGenerator
+      addMeshesBuilder [obb, cone] $ \index -> mod index (length reflectiveShaders) + length colorShaders
+      --addLightBuilder $ PointLight 630 (Rgb 1 1 1) (-2, 40, 30)
+      addLightBuilder $ PointLight 700 (Rgb 1 0.7 1) (0, -20, 30)
+      return ()
+
 perspective1 :: Int -> Int -> Perspective
 perspective1 = createPerspective (0, 0, 10) (0, 1, 10) (0, 0, 1) (pi/2.5)
 
 perspective2 :: Int -> Int -> Perspective
 perspective2 = createPerspective (5, 25, 45) (5, 25, 6) (0, 1, 0) (pi/2.5)
 
-sampleScenes :: [ShadingContext]
-sampleScenes = [getShadingContext scene1]
+sampleScenes :: [IO ShadingContext]
+sampleScenes = [fmap getShadingContext scene2]
 
 -- switchScenes :: [Scene] -> [Perspective] -> (Int, Int) -> (Int, Int) -> IO Bool
 -- switchScenes scenes p (x, y) (dx, dy) = let
@@ -379,12 +395,13 @@ sampleScenes = [getShadingContext scene1]
 -- mapMultiple :: [a -> b] -> a -> [b]
 -- mapMultiple fs x = map ($ x) fs
 
-switchScenes :: [ShadingContext] -> Perspective -> Int -> Int -> IO Bool
+switchScenes :: [IO ShadingContext] -> Perspective -> Int -> Int -> IO Bool
 switchScenes contexts p index offset = let
   len = length contexts
   i = (index + offset + len) `mod` len
   in do
-    renderScene (contexts !! i) p 50
+    ctx <- contexts !! i
+    renderScene ctx p 50
     return False
     -- if cmd == 0 then return False
     -- else switchScenes scenes shaders p i cmd
