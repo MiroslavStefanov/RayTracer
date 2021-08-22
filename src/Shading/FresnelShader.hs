@@ -1,17 +1,26 @@
 module Shading.FresnelShader where
 
--- import Shading.Texture
--- import Shading.PixelState
--- import Shading.Shader
--- import Tracing.Scene
--- import qualified Shading.Color as Color
+import Shading.Texture
+import Shading.PixelState
+import Shading.Shader
+import Tracing.Scene
+import qualified Shading.Color as Color
+import qualified Vector
+import Intersection
 
--- newtype FresnelShader = FresnelShader{ eta :: Float }
+newtype FresnelShader = FresnelShader{ eta :: Float }
 
--- composeShaders :: Float -> Shader -> Shader -> CompositeShader
--- composeShaders alpha first second = CompositeShader [first, second] [alpha, 1.0 - alpha]
-
--- instance Shading CompositeShader where
---   shading (CompositeShader shadings weights) scene incommingRay intersection = Composition states weights where
---     states = map applyShading shadings
---     applyShading shader = shader scene incommingRay intersection
+instance Shading FresnelShader where
+  shading (FresnelShader eta) scene incommingRay@(rayOrigin, rayDirection) intersection = let
+    reflectionRatio = min 1.0 (Vector.rSchlick2 (normal intersection) rayDirection 1 eta)
+    reflectedShader = Tracing reflectedRay
+    reflectedRay = (getPositiveBiasedIntersectionPosition intersection, reflectedDirection)
+    reflectedDirection = Vector.reflect rayDirection $ normal intersection
+    maybeTransmittedDirection = Vector.refract (normal intersection) rayDirection 1 eta
+    in case maybeTransmittedDirection of
+      Nothing -> reflectedShader
+      Just direction -> let
+          transmittedRay = (getNegativeBiasedIntersectionPostion intersection, direction)
+          transmittedShader = Tracing transmittedRay
+          in 
+            Composition [reflectedShader, transmittedShader] [reflectionRatio, 1.0 - reflectionRatio]
