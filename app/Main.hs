@@ -10,7 +10,7 @@ import Shading.Sampler
 import PinholeCamera ( Perspective, createPerspective )
 import Control.Monad.Zip (MonadZip(mzipWith))
 import Control.Monad.Loops (whileM_)
-import Control.Monad ( unless, replicateM )
+import Control.Monad ( unless, replicateM, replicateM_ )
 import Shading.Shader
 import Shading.ColorShader
 import Shading.ReflectionShader
@@ -23,6 +23,8 @@ import Lighting.PointLight
 import Lighting.AmbientLight
 
 import System.Random
+import Data.Vector.Unboxed ()
+import qualified Vector
 
 -- wallTexture :: Sampler Rgb -> Texture
 -- wallTexture colorSampler = Texture colorSampler (constantSampler 1) 0 8 PhongMaterial
@@ -374,9 +376,20 @@ checkerTriangleShader = PhongShader $ solidColorCheckerTexture white magenta 0.0
 newPerspective :: Int -> Int -> Perspective
 newPerspective = createPerspective (0, 0, 0) (0, 0, -1) (0, 1, 0) (pi/3)
 
+ballsScene :: IO (SceneBuilder ())
+ballsScene = do
+  ballColors <- replicateM 20 getRandomColor
+  return $ do
+    addMeshesBuilder smallBalls $ \i -> mod i 20
+    mapM_ (addShaderBuilder . PhongShader . metalicColorTexture) ballColors
+    shader1 <- addShaderBuilder $ composeShaders 0.9 (FresnelShader 1.5) $ PhongShader $ Texture (constantSampler $ Rgb 0.37 0.42 0.44) (constantSampler (10, 1))
+    shader2 <- addShaderBuilder $ composeShaders 0.25 ReflectionShader $ PhongShader $ shinyColorCheckerTexture skyBlue yellow 0.06
+    addMeshesBuilder bigBalls $ \i -> 20 + mod (i+1) 2
+
+
 newScene :: IO (SceneBuilder ())
 newScene = let
-  shaderGenerator index = mod index $ length sampleColors in do 
+  shaderGenerator index = mod index $ length sampleColors in do
     return $ do
       addMeshesBuilder spheres (+1)
       addMeshBuilder $ makeMesh checkerTriangle 0
@@ -393,24 +406,36 @@ newScene2 :: IO (SceneBuilder ())
 newScene2 = let
   shaderGenerator index = mod index $ length sampleColors
   obb = Parallelepiped (3, 3, -13) (1,0,0) (0,1,0) (0,0,1) (1.8,2,2.5)
-  cone = Cone (-3, 2, -12) 2 9
-  sphere = Sphere (-0.5, -0.5, -10) 2 in do 
+  cone = Cone (-3, 3.2, -14) 2 9
+  sphere = Sphere (-0.5, -0.5, -10) 2 in do
     return $ do
       addMeshBuilder $ makeMesh checkerPlane 0
       addShaderBuilder checkerPlaneShader
       addMeshBuilder $ makeMesh obb 1
       addShaderBuilder $ PhongShader $ metalicColorTexture green'
-      --addShaderBuilder $ composeShaders 0 (FresnelShader 1.8) $ PhongShader $ metalicColorTexture white
       addMeshBuilder $ makeMesh cone 2
-      addShaderBuilder $ composeShaders 0.8 ReflectionShader $ PhongShader $ metalicColorTexture black
+      addShaderBuilder $ composeShaders 0.2 ReflectionShader $ PhongShader $ metalicColorTexture $ Rgb 0.3 0.4 0.7
       addMeshBuilder $ makeMesh sphere 3
       addShaderBuilder $ composeShaders 0.8 (FresnelShader 1.8) $ PhongShader $ metalicColorTexture white
       addLightsBuilder pointLights
       addLightBuilder $ AmbientLight 0.18 white
-      return ()        
+      return ()
 
 newPerspective2 :: Int -> Int -> Perspective
 newPerspective2 = createPerspective (0, 0, 10) (0, 1, 10) (0, 0, 1) (pi/2.5)
+
+newScene3 :: IO (SceneBuilder ())
+newScene3 = do
+  ballsBuilder <- ballsScene
+  return $ do
+    ballsBuilder
+    addLightBuilder $ PointLight 630 (Rgb 1 1 1) (-2, 40, 30)
+    addLightBuilder $ PointLight 700 (Rgb 1 0.7 1) (0, -20, 30)
+    floorShader <- addShaderBuilder $ composeShaders 0.4 ReflectionShader $ PhongShader $ shinyColorCheckerTexture black white 1
+    addMeshBuilder $ makeMesh (Plane (0, 0, 0) (0, 0, 1)) floorShader
+
+newPerspective3 :: Int -> Int -> Perspective 
+newPerspective3 = createPerspective (-10, -22, 12) (15, 40, 3.5) (0, 0, 1) (pi/3)
 
 -- scene1 :: SceneBuilder ()
 -- scene1 = let shaderGenerator index = mod index $ length sampleColors in do
@@ -447,7 +472,7 @@ perspective2 :: Int -> Int -> Perspective
 perspective2 = createPerspective (5, 25, 45) (5, 25, 6) (0, 1, 0) (pi/2.5)
 
 sampleScenes :: [IO ShadingContext]
-sampleScenes = [fmap getShadingContext newScene2]
+sampleScenes = [fmap getShadingContext newScene3]
 
 -- switchScenes :: [Scene] -> [Perspective] -> (Int, Int) -> (Int, Int) -> IO Bool
 -- switchScenes scenes p (x, y) (dx, dy) = let
@@ -478,9 +503,6 @@ switchScenes contexts p index offset = let
     -- if cmd == 0 then return False
     -- else switchScenes scenes shaders p i cmd
 
-meshesCount :: Scene -> Int
-meshesCount = length . meshes . root
-
 main :: IO ()
 main = do
   putStrLn "Enter image width"
@@ -489,7 +511,7 @@ main = do
   imageHeight <- (readLn :: IO Int)
 
   let
-    p = newPerspective imageWidth imageHeight
+    p = newPerspective3 imageWidth imageHeight
     --count = meshesCount scene1 - 1
     in
       whileM_ (switchScenes sampleScenes p 0 0) $ return()

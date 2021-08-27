@@ -184,8 +184,8 @@ instance Intersectable Geometry where
                   2 * sumDSqrd * e + 4 * f^2 + fourASqrd * dz^2,
                   4 * sumDSqrd * f,
                   sumDSqrd^2)
-        solution = filter (>kEps) (solve4 coeffs)
-        --solution = solve4 coeffs
+        --solution = filter (>kEps) (solve4 coeffs)
+        solution = solve4 coeffs
         minT = minimum solution
         localHitPoint = scaleTo minT localRay
         localNormal = computeNormalAtPoint torus localHitPoint

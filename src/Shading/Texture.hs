@@ -16,3 +16,6 @@ metalicColorTexture color = Texture (constantSampler color) (constantSampler (20
 
 solidColorCheckerTexture :: Rgb -> Rgb -> Float -> Texture
 solidColorCheckerTexture col1 col2 size = Texture (checkerSampler col1 col2 size) (constantSampler (1, 1))
+
+shinyColorCheckerTexture :: Rgb -> Rgb -> Float -> Texture
+shinyColorCheckerTexture col1 col2 size = Texture (checkerSampler col1 col2 size) (constantSampler (8, 1))

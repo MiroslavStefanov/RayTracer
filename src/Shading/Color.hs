@@ -72,8 +72,8 @@ skyBlue :: Rgb
 skyBlue = Rgb 0.53 0.8 0.92
 
 sampleColors :: [Rgb]
-sampleColors = [red', lime]
---sampleColors = [red', lime, blue', green', skyBlue, silver, navy, purple, magenta, cyan, yellow]
+-- sampleColors = [red', lime]
+sampleColors = [red', lime, blue', green', skyBlue, silver, navy, purple, magenta, yellow]
 
 getRandomColor :: (MonadRandom m) => m Rgb
 getRandomColor =
