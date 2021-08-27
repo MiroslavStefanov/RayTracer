@@ -64,6 +64,3 @@ addLightBuilder source = SceneBuilder builder where
 
 addLightsBuilder :: LightSource s => [s] -> SceneBuilder ()
 addLightsBuilder = mapM_ addLightBuilder
-
--- getShadingContextBuilder :: SceneBuilder ShadingContext
--- getShadingContextBuilder = SceneBuilder $ \context -> (context, context)

@@ -7,7 +7,12 @@ data Rgb = Rgb {
     red :: Float,
     green :: Float,
     blue :: Float
-} deriving (Show, Read, Eq)
+} deriving (Show, Read)
+
+instance Eq Rgb where
+  (==) (Rgb r1 g1 b1) (Rgb r2 g2 b2) = let
+      isEq lhs rhs = abs (lhs - rhs) < 0.1
+      in isEq r1 r2 && isEq g1 g2 && isEq b1 b2
 
 scale :: Float -> Rgb -> Rgb
 scale scalar = multiply (Rgb scalar scalar scalar)
