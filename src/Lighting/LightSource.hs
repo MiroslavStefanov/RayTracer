@@ -6,7 +6,7 @@ import Shading.Texture
 import Shading.Color
 
 
-data ShadowCheck = NoCheck | Ray Ray
+data ShadowCheck = NoCheck | Ray Ray deriving (Show, Eq)
 
 type Occlusion = Intersection -> ShadowCheck
 type Lighting = Ray -> Intersection -> Texture -> Rgb

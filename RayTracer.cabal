@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 0ad16c6f87d547484d04a8fc8bb5031af263c6da589bc2df9cf29fccaff3cfa9
+-- hash: 9fc2851c5415d9b98c12d19a434ced72d207ff036a234984fdffa699450e7d2c
 
 name:           RayTracer
 version:        0.1.0.0
@@ -61,6 +61,7 @@ library
       src
   build-depends:
       JuicyPixels
+    , MonadRandom
     , base >=4.7 && <5
     , hspec
     , linear
@@ -82,6 +83,7 @@ executable RayTracer-exe
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       JuicyPixels
+    , MonadRandom
     , RayTracer
     , base >=4.7 && <5
     , hspec
@@ -100,19 +102,18 @@ test-suite RayTracer-test
   main-is: Spec.hs
   other-modules:
       GeometryIntersect_Test
-      LightSource_Test
+      Lighting.Lighting_Test
       PinholeCamera_Test
       Shading.Color_Test
       Shading.FrameBuffer_Test
       Shading.Sampler_Test
-      Tracing.Scene_Test
-      Tracing.Tracer_Test
       Paths_RayTracer
   hs-source-dirs:
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       JuicyPixels
+    , MonadRandom
     , RayTracer
     , base >=4.7 && <5
     , hspec

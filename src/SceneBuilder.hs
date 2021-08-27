@@ -61,6 +61,3 @@ addMeshesBuilder intersectables shaderIdMapper = mapM_ addMeshBuilder $ zipWith 
 addLightBuilder :: LightSource s => s -> SceneBuilder ()
 addLightBuilder source = SceneBuilder builder where
     builder (ShadingContext scene shaders) = (ShadingContext (addLight scene source) shaders, ())
-
--- getShadingContextBuilder :: SceneBuilder ShadingContext
--- getShadingContextBuilder = SceneBuilder $ \context -> (context, context)

@@ -8,7 +8,5 @@ data Texture = Texture {
   specularSampler :: Sampler (Float, Float)
 }
 
--- shadeTexture :: Texture -> Texel 
-
 solidColorTexture :: Rgb -> Texture
 solidColorTexture color = Texture (constantSampler color) (constantSampler (1, 1))
