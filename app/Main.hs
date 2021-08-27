@@ -16,16 +16,13 @@ import Shading.ColorShader
 import Shading.ReflectionShader
 import Shading.PhongShader
 import Shading.CompositeShader
+import Shading.FresnelShader
 import SceneBuilder
 
 import Lighting.PointLight
 import Lighting.AmbientLight
 
 import System.Random
-import Shading.ReflectionShader (ReflectionShader(ReflectionShader))
-import Shading.PhongShader (PhongShader(PhongShader))
-import Shading.Texture (solidColorTexture)
-import Shading.Color (sampleColors)
 
 -- wallTexture :: Sampler Rgb -> Texture
 -- wallTexture colorSampler = Texture colorSampler (constantSampler 1) 0 8 PhongMaterial
@@ -341,32 +338,107 @@ walls3 = [
 --   meshes = zipWith makeMesh geometry [0 .. length geometry]
 --   scene = foldl addMesh emptyScene meshes
 
-scene1 :: SceneBuilder ()
-scene1 = let shaderGenerator index = mod index $ length sampleColors in do
-  colorShaders <- mapM (addShaderBuilder . PhongShader . solidColorTexture) sampleColors
-  reflectiveShaders <- mapM ((addShaderBuilder . composeShaders 0.25 (shading ReflectionShader)) . (shading . PhongShader . solidColorTexture)) sampleColors
-  addMeshesBuilder walls3 shaderGenerator
-  addMeshesBuilder smallBalls shaderGenerator
-  addMeshesBuilder bigBalls $ \index -> mod index (length reflectiveShaders) + length colorShaders
-  addLightBuilder $ PointLight 630 (Rgb 1 1 1) (-2, 40, 30)
-  addLightBuilder $ PointLight 550 (Rgb 1 0.7 1) (0, 0, 30)
-  addLightBuilder $ AmbientLight 0.3 white
-  return ()
+spheres :: [Geometry]
+spheres = [sphere1, sphere2, sphere3, sphere4]
+  where
+    sphere1 = Sphere (-3, 0, -16) 2
+    sphere2 = Sphere (-1, -1.5, -12) 2
+    sphere3 = Sphere (1.5, -0.5, -18) 3
+    sphere4 = Sphere (7, 5, -18) 4
 
-scene2 :: IO (SceneBuilder ())
-scene2 = let
-  shaderGenerator index = mod index $ length sampleColors
-  obb = Parallelepiped (4, 13, 12) (1,0,0) (0,1,0) (0,0,1) (1.8,2,2.5)
-  cone = Cone (-5, 35, 2) 5 15 in do
-    randomColors <- replicateM 10 getRandomColor
+pointLights :: [PointLight]
+pointLights = [light1, light2, light3]
+  where
+    light1 = PointLight 600 white (-20, 20, 20)
+    light2 = PointLight 800 white (30, 50, -25)
+    light3 = PointLight 700 white (30, 20, 30)
+
+pointLights2 :: [PointLight]
+pointLights2 = [light1]
+  where
+    light1 = PointLight 650 white (10, 20, 30)
+    --light2 = PointLight 800 white (30, 50, -25)
+
+checkerPlane :: Geometry
+checkerPlane = Plane (0, -4, 0) (0, 1, 0)
+
+checkerTriangle :: Geometry
+checkerTriangle = Triangle (0, -4, -60) (-6, -4, -10) (6, -4, -10)
+
+checkerPlaneShader :: PhongShader
+checkerPlaneShader = PhongShader $ solidColorCheckerTexture white purple 1
+
+checkerTriangleShader :: PhongShader
+checkerTriangleShader = PhongShader $ solidColorCheckerTexture white magenta 0.05
+
+newPerspective :: Int -> Int -> Perspective
+newPerspective = createPerspective (0, 0, 0) (0, 0, -1) (0, 1, 0) (pi/3)
+
+newScene :: IO (SceneBuilder ())
+newScene = let
+  shaderGenerator index = mod index $ length sampleColors in do 
     return $ do
-      colorShaders <- mapM (addShaderBuilder . PhongShader . solidColorTexture) randomColors
-      reflectiveShaders <- mapM ((addShaderBuilder . composeShaders 0.25 (shading ReflectionShader)) . (shading . PhongShader . solidColorTexture)) randomColors
-      addMeshesBuilder walls3 shaderGenerator
-      addMeshesBuilder [obb, cone] $ \index -> mod index (length reflectiveShaders) + length colorShaders
-      --addLightBuilder $ PointLight 630 (Rgb 1 1 1) (-2, 40, 30)
-      addLightBuilder $ PointLight 700 (Rgb 1 0.7 1) (0, -20, 30)
+      addMeshesBuilder spheres (+1)
+      addMeshBuilder $ makeMesh checkerTriangle 0
+      addShaderBuilder checkerTriangleShader
+      addShaderBuilder $ PhongShader $ metalicColorTexture silver
+      addShaderBuilder $ composeShaders 0.8 (FresnelShader 1.8) $ PhongShader $ metalicColorTexture white
+      addShaderBuilder $ PhongShader $ solidColorTexture red'
+      addShaderBuilder $ composeShaders 0.8 ReflectionShader $ PhongShader $ metalicColorTexture black
+      addLightsBuilder pointLights
+      addLightBuilder $ AmbientLight 0.18 white
       return ()
+
+newScene2 :: IO (SceneBuilder ())
+newScene2 = let
+  shaderGenerator index = mod index $ length sampleColors
+  obb = Parallelepiped (3, 3, -13) (1,0,0) (0,1,0) (0,0,1) (1.8,2,2.5)
+  cone = Cone (-3, 2, -12) 2 9
+  sphere = Sphere (-0.5, -0.5, -10) 2 in do 
+    return $ do
+      addMeshBuilder $ makeMesh checkerPlane 0
+      addShaderBuilder checkerPlaneShader
+      addMeshBuilder $ makeMesh obb 1
+      addShaderBuilder $ PhongShader $ metalicColorTexture green'
+      --addShaderBuilder $ composeShaders 0 (FresnelShader 1.8) $ PhongShader $ metalicColorTexture white
+      addMeshBuilder $ makeMesh cone 2
+      addShaderBuilder $ composeShaders 0.8 ReflectionShader $ PhongShader $ metalicColorTexture black
+      addMeshBuilder $ makeMesh sphere 3
+      addShaderBuilder $ composeShaders 0.8 (FresnelShader 1.8) $ PhongShader $ metalicColorTexture white
+      addLightsBuilder pointLights
+      addLightBuilder $ AmbientLight 0.18 white
+      return ()        
+
+newPerspective2 :: Int -> Int -> Perspective
+newPerspective2 = createPerspective (0, 0, 10) (0, 1, 10) (0, 0, 1) (pi/2.5)
+
+-- scene1 :: SceneBuilder ()
+-- scene1 = let shaderGenerator index = mod index $ length sampleColors in do
+--   colorShaders <- mapM (addShaderBuilder . PhongShader . solidColorTexture) sampleColors
+--   --reflectiveShaders <- mapM ((addShaderBuilder . composeShaders 0.25 ReflectionShader) . (PhongShader . solidColorTexture)) sampleColors
+--   addMeshesBuilder walls3 shaderGenerator
+--   addMeshesBuilder smallBalls shaderGenerator
+--   --addMeshesBuilder bigBalls $ \index -> mod index (length reflectiveShaders) + length colorShaders
+--   addLightBuilder $ PointLight 630 (Rgb 1 1 1) (-2, 40, 30)
+--   addLightBuilder $ PointLight 550 (Rgb 1 0.7 1) (0, 0, 30)
+--   addLightBuilder $ AmbientLight 0.3 white
+--   return ()
+
+-- scene2 :: IO (SceneBuilder ())
+-- scene2 = let
+--   shaderGenerator index = mod index $ length sampleColors
+--   obb = Parallelepiped (4, 13, 12) (1,0,0) (0,1,0) (0,0,1) (1.8,2,2.5)
+--   cone = Cone (-5, 35, 2) 5 15 in do
+--     randomColors <- replicateM 10 getRandomColor
+--     wallColors <- replicateM 5 getRandomColor
+--     return $ do
+--       colorShaders <- mapM (addShaderBuilder . PhongShader . solidColorTexture) randomColors
+--       reflectiveShaders <- mapM ((addShaderBuilder . composeShaders 0.25 (shading ReflectionShader)) . (shading . PhongShader . solidColorTexture)) randomColors
+--       addMeshesBuilder walls $ \index -> mod index $ length wallColors
+--       addMeshesBuilder [obb, cone] $ \index -> mod index (length reflectiveShaders) + length colorShaders
+--       addLightBuilder $ PointLight 630 (Rgb 1 1 1) (-2, 40, 30)
+--       addLightBuilder $ PointLight 700 (Rgb 1 0.7 1) (0, -20, 30)
+--       return ()
 
 perspective1 :: Int -> Int -> Perspective
 perspective1 = createPerspective (0, 0, 10) (0, 1, 10) (0, 0, 1) (pi/2.5)
@@ -375,7 +447,7 @@ perspective2 :: Int -> Int -> Perspective
 perspective2 = createPerspective (5, 25, 45) (5, 25, 6) (0, 1, 0) (pi/2.5)
 
 sampleScenes :: [IO ShadingContext]
-sampleScenes = [fmap getShadingContext scene2]
+sampleScenes = [fmap getShadingContext newScene2]
 
 -- switchScenes :: [Scene] -> [Perspective] -> (Int, Int) -> (Int, Int) -> IO Bool
 -- switchScenes scenes p (x, y) (dx, dy) = let
@@ -417,7 +489,7 @@ main = do
   imageHeight <- (readLn :: IO Int)
 
   let
-    p = perspective1 imageWidth imageHeight
+    p = newPerspective imageWidth imageHeight
     --count = meshesCount scene1 - 1
     in
       whileM_ (switchScenes sampleScenes p 0 0) $ return()

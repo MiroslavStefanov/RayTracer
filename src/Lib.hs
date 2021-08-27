@@ -32,7 +32,7 @@ computePixel ctx@(ShadingContext scene shaders) state = case state of
   (Tracing ray) -> let
     maybeHit = traceRay scene ray in
     case maybeHit of
-      Nothing -> Ready black
+      Nothing -> Ready cyan
       Just hit -> Shading ray hit
   (Composition states weights) -> let
     computedStates = map (computePixel ctx) states
