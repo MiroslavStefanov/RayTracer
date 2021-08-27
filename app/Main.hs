@@ -365,7 +365,7 @@ checkerPlane :: Geometry
 checkerPlane = Plane (0, -4, 0) (0, 1, 0)
 
 checkerTriangle :: Geometry
-checkerTriangle = Triangle (0, -4, -60) (-6, -4, -10) (6, -4, -10)
+checkerTriangle = Triangle (0, -4, -100) (-10, -4, -10) (10, -4, -10)
 
 checkerPlaneShader :: PhongShader
 checkerPlaneShader = PhongShader $ solidColorCheckerTexture white purple 1
