@@ -39,16 +39,6 @@ addShader shader shaders = (newShaders, index) where
   index = length shaders
   newShaders = shading shader : shaders
 
-
-walls :: [Geometry]
-walls = [
-  Plane (0, 0, 0) (0, 0, 1), --bottom
-  Plane (0, 0, 45) (0, 0, -1), --top
-  Plane (-20, 0, 0) (1, 0, 0), --left
-  Plane (20, 0, 0) (-1, 0, 0), --right
-  Plane (0, 80, 0) (0, -1, 0) --front
-  ]
-
 -- wallMeshes :: ([Mesh], [Shader])
 -- wallMeshes = (meshes, shaders) where
 --   meshes = zipWith Mesh walls shaderIds
@@ -386,6 +376,55 @@ ballsScene = do
     shader2 <- addShaderBuilder $ composeShaders 0.25 ReflectionShader $ PhongShader $ shinyColorCheckerTexture skyBlue yellow 0.06
     addMeshesBuilder bigBalls $ \i -> 20 + mod (i+1) 2
 
+torusScene :: IO (SceneBuilder ())
+torusScene = let
+  shaderGenerator index = mod index $ length sampleColors in do
+    return $ do
+      addMeshBuilder $ makeMesh (Torus (-3, 0, -16) 5 2) 0
+      addShaderBuilder $ PhongShader $ Texture (constantSampler $ Rgb 0.37 0.42 0.44) (constantSampler (10, 8))
+      --addShaderBuilder $ ColorShader red'
+      addLightsBuilder pointLights
+      addLightBuilder $ AmbientLight 0.18 white
+      return ()
+
+torusScene2 :: IO (SceneBuilder ())
+torusScene2 = let
+  shaderGenerator index = mod index $ length sampleColors in do
+    return $ do
+      --addMeshesBuilder walls (+1)
+      addMeshBuilder $ makeMesh (Torus (0, 0, 0) 6 3) 0
+      --addMeshBuilder $ makeMesh (Sphere (0, 0, 0) 1) 0
+      addShaderBuilder $ PhongShader $ Texture (constantSampler purple) (constantSampler (10, 8))
+      --addShaderBuilder $ ColorShader red'
+      --addShaderBuilder $ PhongShader $ metalicColorTexture silver
+      --addShaderBuilder $ composeShaders 0.8 (FresnelShader 1.8) $ PhongShader $ metalicColorTexture white
+      --addShaderBuilder $ PhongShader $ solidColorTexture red'
+      --addShaderBuilder $ composeShaders 0.8 ReflectionShader $ PhongShader $ metalicColorTexture black
+      addLightsBuilder pointLights
+      addLightBuilder $ PointLight 900 white (10, 20, 30)
+      return ()
+
+
+-- scene3 :: Scene
+-- scene3 = scene
+--   where 
+--     torus = Torus (5, 25, 6) 3 2
+--     torusTexture = Texture (constantSampler (Rgb 1 1 0)) (constantSampler 1) 0 8 PhongMaterial
+--     meshTorus = Mesh torus torusTexture
+--     -- light = LS.PointLight 900 (Rgb 1 1 1) (10, 20, 30)
+--     s1 = Scene [] []
+--     s2 = foldl addMesh s1 wallMeshes
+--     s3 = addMesh s2 meshTorus
+--     scene = addLightSrc s3 light
+
+walls :: [Geometry]
+walls = [
+  Plane (0, 0, 0) (0, 0, 1), --bottom
+  Plane (0, 0, 45) (0, 0, -1), --top
+  Plane (-20, 0, 0) (1, 0, 0), --left
+  Plane (20, 0, 0) (-1, 0, 0), --right
+  Plane (0, 80, 0) (0, -1, 0) --front
+  ]
 
 newScene :: IO (SceneBuilder ())
 newScene = let
@@ -429,13 +468,17 @@ newScene3 = do
   ballsBuilder <- ballsScene
   return $ do
     ballsBuilder
-    addLightBuilder $ PointLight 630 (Rgb 1 1 1) (-2, 40, 30)
+    addLightBuilder $ PointLight 420 (Rgb 1 1 1) (-2, 40, 30)
     addLightBuilder $ PointLight 700 (Rgb 1 0.7 1) (0, -20, 30)
-    floorShader <- addShaderBuilder $ composeShaders 0.4 ReflectionShader $ PhongShader $ shinyColorCheckerTexture black white 1
+    --lightBallShader <- addShaderBuilder $ ColorShader navy
+    --addMeshBuilder $ makeMesh (Sphere (0, -20, 30) 2) lightBallShader
+    floorShader <- addShaderBuilder $ composeShaders 0.25 ReflectionShader $ PhongShader $ shinyColorCheckerTexture black white 1
     addMeshBuilder $ makeMesh (Plane (0, 0, 0) (0, 0, 1)) floorShader
+    wallShader <- addShaderBuilder $ PhongShader $ solidColorTexture purple
+    addMeshBuilder $ makeMesh (Plane (30, 60, 0) (0, -1, 0)) wallShader
 
 newPerspective3 :: Int -> Int -> Perspective 
-newPerspective3 = createPerspective (-10, -22, 12) (15, 40, 3.5) (0, 0, 1) (pi/3)
+newPerspective3 = createPerspective (-10, -30, 12) (15, 40, 3.5) (0, 0, 1) (pi/2.5)
 
 -- scene1 :: SceneBuilder ()
 -- scene1 = let shaderGenerator index = mod index $ length sampleColors in do
@@ -466,13 +509,13 @@ newPerspective3 = createPerspective (-10, -22, 12) (15, 40, 3.5) (0, 0, 1) (pi/3
 --       return ()
 
 perspective1 :: Int -> Int -> Perspective
-perspective1 = createPerspective (0, 0, 10) (0, 1, 10) (0, 0, 1) (pi/2.5)
+perspective1 = createPerspective (10, 0, 25) (0, 0, 0) (0, 1, 0) (pi/2.5)
 
 perspective2 :: Int -> Int -> Perspective
 perspective2 = createPerspective (5, 25, 45) (5, 25, 6) (0, 1, 0) (pi/2.5)
 
 sampleScenes :: [IO ShadingContext]
-sampleScenes = [fmap getShadingContext newScene3]
+sampleScenes = map (fmap getShadingContext) [newScene, newScene2, newScene3, torusScene2]
 
 -- switchScenes :: [Scene] -> [Perspective] -> (Int, Int) -> (Int, Int) -> IO Bool
 -- switchScenes scenes p (x, y) (dx, dy) = let
@@ -492,13 +535,13 @@ sampleScenes = [fmap getShadingContext newScene3]
 -- mapMultiple :: [a -> b] -> a -> [b]
 -- mapMultiple fs x = map ($ x) fs
 
-switchScenes :: [IO ShadingContext] -> Perspective -> Int -> Int -> IO Bool
+switchScenes :: [IO ShadingContext] -> [Perspective] -> Int -> Int -> IO Bool
 switchScenes contexts p index offset = let
   len = length contexts
   i = (index + offset + len) `mod` len
   in do
     ctx <- contexts !! i
-    renderScene ctx p 50
+    renderScene ctx (p !! i) 50
     return False
     -- if cmd == 0 then return False
     -- else switchScenes scenes shaders p i cmd
@@ -511,17 +554,9 @@ main = do
   imageHeight <- (readLn :: IO Int)
 
   let
-    p = newPerspective3 imageWidth imageHeight
-    --count = meshesCount scene1 - 1
+    p = newPerspective imageWidth imageHeight
+    p1 = newPerspective imageWidth imageHeight
+    p2 = newPerspective3 imageWidth imageHeight
+    p3 = perspective1 imageWidth imageHeight
     in
-      whileM_ (switchScenes sampleScenes p 0 0) $ return()
-      -- reds <- replicateM count (randomIO :: IO Float)
-      -- greens <- replicateM count (randomIO :: IO Float)
-      -- blues <- replicateM count (randomIO :: IO Float)
-      -- let
-      --   --shaders = shading ReflectionShader : map (shading . ColorShader) (zipWith3 Rgb reds greens blues) 
-      --   in
-
-
-  -- let perspectives =  mapMultiple (mapMultiple [perspective1, perspective2] imageWidth) imageHeight in
-  --   whileM_ (switchScenes sampleScenes perspectives (0, 0) (0, 0)) $ return()
+      whileM_ (switchScenes sampleScenes [p, p1, p2, p3] 3 0) $ return()

@@ -22,9 +22,10 @@ instance LightSource PointLight where
         specularColor = scale (phongCoefficient * lightFactor * specularMultiplier) white
         diffuseColor = sample (diffuseSampler texture) $ coordinates intersection
         finalColor = multiply diffuseColor lightFinalColor `add` specularColor
-    occlusion (PointLight intensity color point) intersection = Ray (rayStart, rayDirection) where
+    occlusion (PointLight intensity color point) intersection = Ray (rayStart, rayDirection) (Vector.lengthSqr $ Vector.subtract rayStart point) where
         rayStart = getPositiveBiasedIntersectionPosition intersection
+        --rayStart = getNegativeBiasedIntersectionPostion intersection
         rayDirection = Vector.normalize $ Vector.subtract point $ position intersection
         -- rayStart = position intersection `Vector.add` Vector.scale biasEpsilon rayDirection
-        rayToLight = (getPositiveBiasedIntersectionPosition intersection, rayDirection)
+        rayToLight = (rayStart, rayDirection)
 

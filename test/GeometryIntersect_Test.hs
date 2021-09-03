@@ -48,7 +48,7 @@ testRay8 :: Ray
 testRay8 = ((2, 0, 5), (0, 0, 1))
 
 testRay9 :: Ray
-testRay9 = ((2, 2, 5), (0, 0, 1))
+testRay9 = ((2, 2, 5), (0, 1, 0))
 
 testIntersectPlaneWithRay :: IO()
 testIntersectPlaneWithRay = hspec $ do

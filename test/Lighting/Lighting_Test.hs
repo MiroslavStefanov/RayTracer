@@ -10,7 +10,7 @@ import Intersection
 import Test.Hspec
 import Lighting.LightSource (LightSource(lighting, occlusion), ShadowCheck (NoCheck, Ray))
 import Shading.Sampler
-import Vector (normalize)
+import Vector (normalize, lengthSqr, subtract)
 
 testAmbientLight :: IO()
 testAmbientLight = hspec $ do
@@ -43,10 +43,11 @@ testPointLight = hspec $ do
      tex = Texture (constantSampler white) (constantSampler (0, 0))
      intersection = Intersection (0, 0, 0) (0, 1, 0) 2 (0, 0)
      ray = ((0, 5, 0), (0.72, -0.72, 0))
+     distSqr = lengthSqr $ Vector.subtract pos (0, biasEpsilon, 0)
      in do
      context "Occlusion" $ do
         it "Shadow ray" $ do
-          occlusion light intersection `shouldBe` Ray ((0, biasEpsilon, 0), normalize (0, 10, 1))
+          occlusion light intersection `shouldBe` Ray ((0, biasEpsilon, 0), normalize (0, 10, 1)) distSqr
      context "Lighting" $ do
        it "Phong illumination model" $ do
          lighting light ray intersection tex `shouldBe` color
