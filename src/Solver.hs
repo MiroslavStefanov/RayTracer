@@ -46,9 +46,9 @@ solve3Calc (c1, c2, c3, c4)
       bb = c2 / c4
       cc = c1 / c4
       sqrA = aa^2
-      p = 1 / 3 * ((-1) / 3 * sqrA + bb)
-      q = 1 / 2 * (2 / 27 * aa * sqrA - 1 / 3 * aa * bb + cc)
-      dd = q^2 - p^3
+      p = (1 / 3) * (((-1) / 3) * sqrA + bb)
+      q = (1 / 2) * (2 / 27 * aa * sqrA - 1 / 3 * aa * bb + cc)
+      dd = q^2 + p^3
       u = (-q) ** (1/3)
       phi = 1 / 3 * acos ((-q) / sqrt (-p^3))
       t = 2 * sqrt (-p)

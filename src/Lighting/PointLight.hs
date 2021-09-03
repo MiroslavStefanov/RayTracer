@@ -25,5 +25,6 @@ instance LightSource PointLight where
     occlusion (PointLight intensity color point) intersection = Ray (rayStart, rayDirection) where
         rayStart = getPositiveBiasedIntersectionPosition intersection
         rayDirection = Vector.normalize $ Vector.subtract point $ position intersection
+        -- rayStart = position intersection `Vector.add` Vector.scale biasEpsilon rayDirection
         rayToLight = (getPositiveBiasedIntersectionPosition intersection, rayDirection)
 

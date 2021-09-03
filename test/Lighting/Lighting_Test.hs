@@ -46,7 +46,7 @@ testPointLight = hspec $ do
      in do
      context "Occlusion" $ do
         it "Shadow ray" $ do
-          occlusion light intersection `shouldBe` Ray ((0, 0.001, 0), normalize (0, 10, 1))
+          occlusion light intersection `shouldBe` Ray ((0, biasEpsilon, 0), normalize (0, 10, 1))
      context "Lighting" $ do
        it "Phong illumination model" $ do
          lighting light ray intersection tex `shouldBe` color
